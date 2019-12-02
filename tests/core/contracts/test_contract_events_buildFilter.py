@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     keccak,
 )
 from hexbytes import (
@@ -12,7 +12,7 @@ CONTRACT_ABI = json.loads('[{"constant":false,"inputs":[],"name":"return13","out
 
 
 def test_build_filter_topic_signature(web3):
-    contract = web3.eth.contract(abi=CONTRACT_ABI)
+    contract = web3.vns.contract(abi=CONTRACT_ABI)
     filter_builder = contract.events.Increased.build_filter()
     filter_builder.args['value'].match_any(100, 200, 300)
     _filter = filter_builder.deploy(web3)
@@ -23,7 +23,7 @@ def test_build_filter_topic_signature(web3):
 
 
 def test_build_filter_resetting_build_filter_properties(web3):
-    contract = web3.eth.contract(abi=CONTRACT_ABI)
+    contract = web3.vns.contract(abi=CONTRACT_ABI)
     filter_builder = contract.events.Increased.build_filter()
     # Address is setable from undeployed contract class
     filter_builder.address = b'\x10' * 40
@@ -39,7 +39,7 @@ def test_build_filter_resetting_build_filter_properties(web3):
 
 
 def test_build_filter_argument_match_single_can_only_be_set_once(web3):
-    contract = web3.eth.contract(abi=CONTRACT_ABI)
+    contract = web3.vns.contract(abi=CONTRACT_ABI)
     filter_builder = contract.events.Increased.build_filter()
     filter_builder.args['value'].match_single(100)
     with pytest.raises(ValueError):
@@ -47,7 +47,7 @@ def test_build_filter_argument_match_single_can_only_be_set_once(web3):
 
 
 def test_build_filter_argument_match_any_can_only_be_set_once(web3):
-    contract = web3.eth.contract(abi=CONTRACT_ABI)
+    contract = web3.vns.contract(abi=CONTRACT_ABI)
     filter_builder = contract.events.Increased.build_filter()
     filter_builder.args['value'].match_any(100, 200)
     with pytest.raises(ValueError):
@@ -55,7 +55,7 @@ def test_build_filter_argument_match_any_can_only_be_set_once(web3):
 
 
 def test_deployed_build_filter_can_have_no_values_set(web3):
-    contract = web3.eth.contract(abi=CONTRACT_ABI)
+    contract = web3.vns.contract(abi=CONTRACT_ABI)
     filter_builder = contract.events.Increased.build_filter()
     filter_builder.deploy(web3)
     with pytest.raises(ValueError):

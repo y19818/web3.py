@@ -1,7 +1,7 @@
 import collections
 import hashlib
 
-from eth_utils import (
+from vns_utils import (
     is_boolean,
     is_bytes,
     is_dict,

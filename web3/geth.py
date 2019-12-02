@@ -2,18 +2,13 @@ from web3._utils import (
     shh,
 )
 from web3._utils.admin import (
-    add_peer,
     addPeer,
     datadir,
-    node_info,
     nodeInfo,
     peers,
-    start_rpc,
-    start_ws,
+    setSolc,
     startRPC,
     startWS,
-    stop_rpc,
-    stop_ws,
     stopRPC,
     stopWS,
 )
@@ -35,7 +30,6 @@ from web3._utils.personal import (
     newAccount,
     sendTransaction,
     sign,
-    signTypedData,
     unlockAccount,
 )
 from web3._utils.txpool import (
@@ -64,7 +58,6 @@ class GethPersonal(ModuleV2):
     newAccount = newAccount
     sendTransaction = sendTransaction
     sign = sign
-    signTypedData = signTypedData
     unlockAccount = unlockAccount
 
 
@@ -81,17 +74,11 @@ class GethAdmin(ModuleV2):
     """
     https://github.com/ethereum/go-ethereum/wiki/Management-APIs#admin
     """
-    add_peer = add_peer
-    node_info = node_info
-    start_rpc = start_rpc
-    start_ws = start_ws
-    stop_ws = stop_ws
-    stop_rpc = stop_rpc
-    # deprecated
     addPeer = addPeer
     datadir = datadir
     nodeInfo = nodeInfo
     peers = peers
+    setSolc = setSolc
     startRPC = startRPC
     startWS = startWS
     stopRPC = stopRPC
@@ -116,46 +103,26 @@ class GethShh(ModuleV2):
     """
     https://github.com/ethereum/go-ethereum/wiki/Whisper-v6-RPC-API
     """
-    add_private_key = shh.add_private_key
-    add_sym_key = shh.add_sym_key
-    delete_key = shh.delete_key
-    delete_key_pair = shh.delete_key_pair
-    delete_message_filter = shh.delete_message_filter
-    delete_sym_key = shh.delete_sym_key
-    generate_sym_key_from_password = shh.generate_sym_key_from_password
-    get_filter_messages = shh.get_filter_messages
-    get_private_key = shh.get_private_key
-    get_public_key = shh.get_public_key
-    get_sym_key = shh.get_sym_key
-    has_key_pair = shh.has_key_pair
-    has_sym_key = shh.has_sym_key
-    info = shh.info
-    mark_trusted_peer = shh.mark_trusted_peer
-    new_key_pair = shh.new_key_pair
-    new_message_filter = shh.new_message_filter
-    new_sym_key = shh.new_sym_key
-    post = shh.post
-    set_max_message_size = shh.set_max_message_size
-    set_min_pow = shh.set_min_pow
-    subscribe = shh.subscribe
-    unsubscribe = shh.unsubscribe
     version = shh.version
-    # Deprecated
-    addPrivateKey = shh.addPrivateKey
-    addSymKey = shh.addSymKey
-    deleteKeyPair = shh.deleteKeyPair
-    deleteMessageFilter = shh.deleteMessageFilter
-    deleteSymKey = shh.deleteSymKey
-    generateSymKeyFromPassword = shh.generateSymKeyFromPassword
-    getMessages = shh.getFilterMessages
-    getPrivateKey = shh.getPrivateKey
-    getPublicKey = shh.getPublicKey
-    getSymKey = shh.getSymKey
-    hasKeyPair = shh.hasKeyPair
-    hasSymKey = shh.hasSymKey
-    markTrustedPeer = shh.markTrustedPeer
-    newKeyPair = shh.newKeyPair
-    newMessageFilter = shh.newMessageFilter
-    newSymKey = shh.newSymKey
+    info = shh.info
     setMaxMessageSize = shh.setMaxMessageSize
     setMinPoW = shh.setMinPoW
+    markTrustedPeer = shh.markTrustedPeer
+    newKeyPair = shh.newKeyPair
+    addPrivateKey = shh.addPrivateKey
+    deleteKeyPair = shh.deleteKeyPair
+    hasKeyPair = shh.hasKeyPair
+    getPublicKey = shh.getPublicKey
+    getPrivateKey = shh.getPrivateKey
+    newSymKey = shh.newSymKey
+    addSymKey = shh.addSymKey
+    generateSymKeyFromPassword = shh.generateSymKeyFromPassword
+    hasSymKey = shh.hasSymKey
+    getSymKey = shh.getSymKey
+    deleteSymKey = shh.deleteSymKey
+    post = shh.post
+    newMessageFilter = shh.newMessageFilter
+    deleteMessageFilter = shh.deleteMessageFilter
+    getMessages = shh.getFilterMessages
+    subscribe = shh.subscribe
+    unsubscribe = shh.unsubscribe

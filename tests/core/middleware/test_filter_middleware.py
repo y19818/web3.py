@@ -38,10 +38,10 @@ def iter_block_number(start=0):
 @pytest.fixture(scope='function')
 def result_generator_middleware(iter_block_number):
     return construct_result_generator_middleware({
-        'eth_getLogs': lambda *_: ["middleware"],
-        'eth_getBlockByNumber': lambda *_: type('block', (object,), {'hash': 'middleware'}),
+        'vns_getLogs': lambda *_: ["middleware"],
+        'vns_getBlockByNumber': lambda *_: type('block', (object,), {'hash': 'middleware'}),
         'net_version': lambda *_: 1,
-        'eth_blockNumber': lambda *_: next(iter_block_number),
+        'vns_blockNumber': lambda *_: next(iter_block_number),
     })
 
 
@@ -119,23 +119,22 @@ def test_iter_latest_block_ranges(
 
 def test_pending_block_filter_middleware(w3):
     with pytest.raises(NotImplementedError):
-        w3.eth.filter('pending')
+        w3.vns.filter('pending')
 
 
 def test_local_filter_middleware(w3, iter_block_number):
-    block_filter = w3.eth.filter('latest')
-    block_filter.get_new_entries()
+    block_filter = w3.vns.filter('latest')
     iter_block_number.send(1)
 
-    log_filter = w3.eth.filter(filter_params={'fromBlock': 'latest'})
+    log_filter = w3.vns.filter(filter_params={'fromBlock': 'latest'})
 
-    assert w3.eth.getFilterChanges(block_filter.filter_id) == ["middleware"]
+    assert w3.vns.getFilterChanges(block_filter.filter_id) == ["middleware"]
 
     iter_block_number.send(2)
-    results = w3.eth.getFilterChanges(log_filter.filter_id)
+    results = w3.vns.getFilterChanges(log_filter.filter_id)
     assert results == ["middleware"]
 
-    assert w3.eth.getFilterLogs(log_filter.filter_id) == ["middleware"]
+    assert w3.vns.getFilterLogs(log_filter.filter_id) == ["middleware"]
 
     filter_ids = (
         block_filter.filter_id,

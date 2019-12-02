@@ -34,36 +34,19 @@ Using Web3
 ----------
 
 To use the web3 library you will need to initialize the
-:class:`~web3.Web3` class and connect to an Ethereum node.
-The quickest way to do so for free is by setting up an account on
-`Infura <https://infura.io/>`_. On Infura, create a project and copy
-the Project ID. Then set the environment variable ``WEB3_INFURA_PROJECT_ID``.
+:class:`~web3.Web3` class.
 
-.. code-block:: shell
-
-    $ export WEB3_INFURA_PROJECT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-Use the ``web3.auto.infura`` module to connect to the Infura node.
+Use the ``auto`` module to :ref:`guess at common node connection options
+<automatic_provider_detection>`.
 
 .. code-block:: python
 
-    >>> from web3.auto.infura import w3
-    >>> w3.eth.blockNumber
+    >>> from web3.auto import w3
+    >>> w3.vns.blockNumber
     4000000
 
 This ``w3`` instance will now allow you to interact with the Ethereum
 blockchain.
-
-.. NOTE::
-    If you don't want to use Infura, the ``web3.auto`` module is
-    available and will :ref:`guess at common node connection
-    options <automatic_provider_detection>`.
-
-      .. code-block:: python
-
-          >>> from web3.auto import w3
-          >>> w3.eth.blockNumber
-          4000000
 
 .. NOTE:: If you get the result ``UnhandledRequest: No providers responded to the RPC request``
     then you are not connected to a node. See :ref:`why_need_connection` and
@@ -78,7 +61,7 @@ It's time to start using Web3.py! Try getting all the information about the late
 
 .. code-block:: python
 
-    >>> w3.eth.getBlock('latest')
+    >>> w3.vns.getBlock('latest')
     {'difficulty': 1,
      'gasLimit': 6283185,
      'gasUsed': 0,
@@ -100,12 +83,12 @@ It's time to start using Web3.py! Try getting all the information about the late
      'transactionsRoot': HexBytes('0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421'),
      'uncles': []}
 
-Many of the typical things you'll want to do will be in the :class:`w3.eth <web3.eth.Eth>` API,
+Many of the typical things you'll want to do will be in the :class:`w3.vns <web3.vns.Bbbbbbbb>` API,
 so that is a good place to start.
 
 If you want to dive straight into contracts, check out the section on :ref:`contracts`,
 including a :ref:`contract_example`, and how to create a contract instance using
-:meth:`w3.eth.contract() <web3.eth.Eth.contract>`.
+:meth:`w3.vns.contract() <web3.vns.Bbbbbbbb.contract>`.
 
 .. NOTE:: It is recommended that your development environment have the ``PYTHONWARNINGS=default``
     environment variable set. Some deprecation warnings will not show up

@@ -11,7 +11,6 @@ ABI_D = json.loads('[{ "constant": false, "inputs": [ { "name": "b", "type": "by
 ABI_BYTES = json.loads('[{"constant":false,"inputs":[{"name":"bytesarg","type":"bytes"}],"name":"bytesfunc","outputs":[],"type":"function"}]')  # noqa: E501
 ABI_STRING = json.loads('[{"constant":false,"inputs":[{"name":"stringarg","type":"string"}],"name":"stringfunc","outputs":[],"type":"function"}]')  # noqa: E501
 ABI_ADDRESS = json.loads('[{"constant":false,"inputs":[{"name":"addressarg","type":"address"}],"name":"addressfunc","outputs":[],"type":"function"}]')  # noqa: E501
-ABI_TUPLE = json.loads('[{"constant":false,"inputs":[{"components":[{"name":"owner","type":"address"},{"name":"number","type":"uint256"}],"name":"fromAccount","type":"tuple"},{"components":[{"name":"owner","type":"address"},{"name":"number","type":"uint256"}],"name":"liquidAccount","type":"tuple"},{"components":[{"name":"value","type":"uint256"}],"name":"minLiquidatorRatio","type":"tuple"},{"name":"minValueLiquidated","type":"uint256"},{"name":"owedPreferences","type":"uint256[]"},{"name":"heldPreferences","type":"uint256[]"}],"name":"liquidate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"}]')  # noqa: E501
 a32bytes = b'a'.ljust(32, b'\x00')
 
 
@@ -66,23 +65,10 @@ a32bytes = b'a'.ljust(32, b'\x00')
             'addressfunc',
             {'addressarg': '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF'},
         ),
-        (
-            ABI_TUPLE,
-            '0xc29a4b71000000000000000000000000bfae42a79ff045659dd0f84e65534f5c4c8100230000000000000000000000000000000000000000000000000000000000000000000000000000000000000000db3d3af153cb02f0bc44621db82289280e93500f94a7d1598c397f6b49ecd5ccbc2b464259b96870063493b0dc7409d0fd9fb9860000000000000000000000000000000000000000000000000429d069189e00000000000000000000000000000000000178287f49c4a1d6622fb2ab40000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001',  # noqa: E501
-            'liquidate',
-            {
-                'fromAccount': ('0xBfae42A79FF045659DD0F84e65534f5c4c810023', 0),
-                'liquidAccount': ('0xdb3d3AF153cB02f0Bc44621Db82289280e93500F', 67238809929330522294664880975001390268660278453875034113630810005818923006342),  # noqa: E501
-                'minLiquidatorRatio': (300000000000000000,),
-                'minValueLiquidated': 500000000000000000000000000000000000000,
-                'owedPreferences': [0, 1, 2],
-                'heldPreferences': [2, 0, 1],
-            },
-        ),
     ),
 )
 def test_contract_abi_decoding(web3, abi, data, method, expected):
-    contract = web3.eth.contract(abi=abi)
+    contract = web3.vns.contract(abi=abi)
     func, params = contract.decode_function_input(data)
     assert func.fn_name == method
     assert params == expected
@@ -109,7 +95,7 @@ def test_contract_abi_decoding(web3, abi, data, method, expected):
     ),
 )
 def test_contract_abi_encoding_kwargs(web3, abi, method, expected, data):
-    contract = web3.eth.contract(abi=abi)
+    contract = web3.vns.contract(abi=abi)
     func, params = contract.decode_function_input(data)
     assert func.fn_name == method
     assert params == expected

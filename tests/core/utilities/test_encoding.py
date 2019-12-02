@@ -7,7 +7,7 @@ from unittest.mock import (
     Mock,
 )
 
-from eth_utils import (
+from vns_utils import (
     is_hex,
 )
 from hypothesis import (

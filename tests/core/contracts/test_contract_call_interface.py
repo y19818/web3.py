@@ -8,19 +8,16 @@ from distutils.version import (
 import json
 import pytest
 
-import eth_abi
-from eth_utils import (
-    is_text,
-)
-from eth_utils.toolz import (
-    identity,
-)
+import vns_abi
 from hexbytes import (
     HexBytes,
 )
 
 from web3._utils.ens import (
     contract_ens_addresses,
+)
+from web3._utils.toolz import (
+    identity,
 )
 from web3.exceptions import (
     BadFunctionCallOutput,
@@ -39,12 +36,12 @@ pytestmark = pytest.mark.filterwarnings("ignore:implicit cast from 'char *'")
 def deploy(web3, Contract, apply_func=identity, args=None):
     args = args or []
     deploy_txn = Contract.constructor(*args).transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     address = apply_func(deploy_receipt['contractAddress'])
     contract = Contract(address=address)
     assert contract.address == address
-    assert len(web3.eth.getCode(contract.address)) > 0
+    assert len(web3.vns.getCode(contract.address)) > 0
     return contract
 
 
@@ -75,22 +72,6 @@ def arrays_contract(web3, ArraysContract, address_conversion_func):
 
 
 @pytest.fixture()
-def strict_arrays_contract(w3_strict_abi, StrictArraysContract, address_conversion_func):
-    # bytes_32 = [keccak('0'), keccak('1')]
-    bytes32_array = [
-        b'\x04HR\xb2\xa6p\xad\xe5@~x\xfb(c\xc5\x1d\xe9\xfc\xb9eB\xa0q\x86\xfe:\xed\xa6\xbb\x8a\x11m',  # noqa: E501
-        b'\xc8\x9e\xfd\xaaT\xc0\xf2\x0cz\xdfa(\x82\xdf\tP\xf5\xa9Qc~\x03\x07\xcd\xcbLg/)\x8b\x8b\xc6',  # noqa: E501
-    ]
-    byte_arr = [b'\xff', b'\xff', b'\xff', b'\xff']
-    return deploy(
-        w3_strict_abi,
-        StrictArraysContract,
-        address_conversion_func,
-        args=[bytes32_array, byte_arr]
-    )
-
-
-@pytest.fixture()
 def address_contract(web3, WithConstructorAddressArgumentsContract, address_conversion_func):
     return deploy(
         web3,
@@ -102,14 +83,7 @@ def address_contract(web3, WithConstructorAddressArgumentsContract, address_conv
 
 @pytest.fixture(params=[b'\x04\x06', '0x0406', '0406'])
 def bytes_contract(web3, BytesContract, request, address_conversion_func):
-    if is_text(request.param) and request.param[:2] != '0x':
-        with pytest.warns(
-            DeprecationWarning,
-            match='in v6 it will be invalid to pass a hex string without the "0x" prefix'
-        ):
-            return deploy(web3, BytesContract, address_conversion_func, args=[request.param])
-    else:
-        return deploy(web3, BytesContract, address_conversion_func, args=[request.param])
+    return deploy(web3, BytesContract, address_conversion_func, args=[request.param])
 
 
 @pytest.fixture()
@@ -136,11 +110,7 @@ def call_transaction():
     HexBytes('0406040604060406040604060406040604060406040604060406040604060406'),
 ])
 def bytes32_contract(web3, Bytes32Contract, request, address_conversion_func):
-    if is_text(request.param) and request.param[:2] != '0x':
-        with pytest.warns(DeprecationWarning):
-            return deploy(web3, Bytes32Contract, address_conversion_func, args=[request.param])
-    else:
-        return deploy(web3, Bytes32Contract, address_conversion_func, args=[request.param])
+    return deploy(web3, Bytes32Contract, address_conversion_func, args=[request.param])
 
 
 @pytest.fixture()
@@ -153,7 +123,7 @@ def undeployed_math_contract(web3, MathContract, address_conversion_func):
 @pytest.fixture()
 def mismatched_math_contract(web3, StringContract, MathContract, address_conversion_func):
     deploy_txn = StringContract.constructor("Caqalai").transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     address = address_conversion_func(deploy_receipt['contractAddress'])
     _mismatched_math_contract = MathContract(address=address)
@@ -228,15 +198,15 @@ def test_saved_method_call_with_multiple_arguments(math_contract, call_args, cal
 def test_call_get_string_value(string_contract, call):
     result = call(contract=string_contract,
                   contract_function='getValue')
-    # eth_abi.decode_abi() does not assume implicit utf-8
+    # vns_abi.decode_abi() does not assume implicit utf-8
     # encoding of string return values. Thus, we need to decode
     # ourselves for fair comparison.
     assert result == "Caqalai"
 
 
 @pytest.mark.skipif(
-    LooseVersion(eth_abi.__version__) >= LooseVersion("2"),
-    reason="eth-abi >=2 does utf-8 string decoding")
+    LooseVersion(vns_abi.__version__) >= LooseVersion("2"),
+    reason="vns-abi >=2 does utf-8 string decoding")
 def test_call_read_string_variable(string_contract, call):
     result = call(contract=string_contract,
                   contract_function='constValue')
@@ -244,8 +214,8 @@ def test_call_read_string_variable(string_contract, call):
 
 
 @pytest.mark.skipif(
-    LooseVersion(eth_abi.__version__) < LooseVersion("2"),
-    reason="eth-abi does not raise exception on undecodable bytestrings")
+    LooseVersion(vns_abi.__version__) < LooseVersion("2"),
+    reason="vns-abi does not raise exception on undecodable bytestrings")
 def test_call_on_undecodable_string(string_contract, call):
     with pytest.raises(BadFunctionCallOutput):
         call(
@@ -282,47 +252,6 @@ def test_call_get_byte_array(arrays_contract, call):
     assert result == expected_byte_arr
 
 
-@pytest.mark.parametrize('args,expected', [([b''], [b'\x00']), (['0x'], [b'\x00'])])
-def test_set_byte_array(arrays_contract, call, transact, args, expected):
-    transact(
-        contract=arrays_contract,
-        contract_function='setByteValue',
-        func_args=[args]
-    )
-    result = call(contract=arrays_contract,
-                  contract_function='getByteValue')
-
-    assert result == expected
-
-
-@pytest.mark.parametrize(
-    'args,expected', [
-        ([b'1'], [b'1']),
-        (['0xDe'], [b'\xDe'])
-    ]
-)
-def test_set_strict_byte_array(strict_arrays_contract, call, transact, args, expected):
-    transact(
-        contract=strict_arrays_contract,
-        contract_function='setByteValue',
-        func_args=[args]
-    )
-    result = call(contract=strict_arrays_contract,
-                  contract_function='getByteValue')
-
-    assert result == expected
-
-
-@pytest.mark.parametrize('args', ([''], ['s']))
-def test_set_strict_byte_array_with_invalid_args(strict_arrays_contract, transact, args):
-    with pytest.raises(ValidationError):
-        transact(
-            contract=strict_arrays_contract,
-            contract_function='setByteValue',
-            func_args=[args]
-        )
-
-
 def test_call_get_byte_const_array(arrays_contract, call):
     result = call(contract=arrays_contract,
                   contract_function='getByteConstValue')
@@ -339,10 +268,10 @@ def test_call_read_address_variable(address_contract, call):
 def test_init_with_ens_name_arg(web3, WithConstructorAddressArgumentsContract, call):
     with contract_ens_addresses(
         WithConstructorAddressArgumentsContract,
-        [("arg-name.eth", "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413")],
+        [("arg-name.vns", "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413")],
     ):
         address_contract = deploy(web3, WithConstructorAddressArgumentsContract, args=[
-            "arg-name.eth",
+            "arg-name.vns",
         ])
 
     result = call(contract=address_contract,
@@ -440,18 +369,18 @@ def test_call_address_list_reflector_with_address(address_reflector_contract,
 def test_call_address_reflector_single_name(address_reflector_contract, call):
     with contract_ens_addresses(
         address_reflector_contract,
-        [("dennisthepeasant.eth", "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413")],
+        [("dennisthepeasant.vns", "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413")],
     ):
         result = call(contract=address_reflector_contract,
                       contract_function='reflect',
-                      func_args=['dennisthepeasant.eth'])
+                      func_args=['dennisthepeasant.vns'])
         assert result == '0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413'
 
 
 def test_call_address_reflector_name_array(address_reflector_contract, call):
     names = [
-        'autonomouscollective.eth',
-        'wedonthavealord.eth',
+        'autonomouscollective.vns',
+        'wedonthavealord.vns',
     ]
     addresses = [
         '0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413',
@@ -471,7 +400,7 @@ def test_call_reject_invalid_ens_name(address_reflector_contract, call):
         with pytest.raises(ValueError):
             call(contract=address_reflector_contract,
                  contract_function='reflect',
-                 func_args=['type0.eth'])
+                 func_args=['type0.vns'])
 
 
 def test_call_missing_function(mismatched_math_contract, call):
@@ -536,7 +465,7 @@ def test_neg_block_indexes_from_the_end(web3, math_contract):
 
 
 def test_returns_data_from_specified_block(web3, math_contract):
-    start_num = web3.eth.getBlock('latest').number
+    start_num = web3.vns.getBlock('latest').number
     web3.provider.make_request(method='evm_mine', params=[5])
     math_contract.functions.increment().transact()
     math_contract.functions.increment().transact()
@@ -585,7 +514,7 @@ def test_function_1_match_identifier_wrong_args_encoding(arrays_contract):
 
 def test_function_multiple_match_identifiers_no_correct_number_of_args(web3):
     MULTIPLE_FUNCTIONS = json.loads('[{"constant":false,"inputs":[],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"bytes32"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint256"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint8"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"int8"}],"name":"a","outputs":[],"type":"function"}]')  # noqa: E501
-    Contract = web3.eth.contract(abi=MULTIPLE_FUNCTIONS)
+    Contract = web3.vns.contract(abi=MULTIPLE_FUNCTIONS)
     regex = message_regex + diagnosis_arg_regex
     with pytest.raises(ValidationError, match=regex):
         Contract.functions.a(100, 'dog').call()
@@ -593,7 +522,7 @@ def test_function_multiple_match_identifiers_no_correct_number_of_args(web3):
 
 def test_function_multiple_match_identifiers_no_correct_encoding_of_args(web3):
     MULTIPLE_FUNCTIONS = json.loads('[{"constant":false,"inputs":[],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"bytes32"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint256"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint8"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"int8"}],"name":"a","outputs":[],"type":"function"}]')  # noqa: E501
-    Contract = web3.eth.contract(abi=MULTIPLE_FUNCTIONS)
+    Contract = web3.vns.contract(abi=MULTIPLE_FUNCTIONS)
     regex = message_regex + diagnosis_encoding_regex
     with pytest.raises(ValidationError, match=regex):
         Contract.functions.a('dog').call()
@@ -601,20 +530,20 @@ def test_function_multiple_match_identifiers_no_correct_encoding_of_args(web3):
 
 def test_function_multiple_possible_encodings(web3):
     MULTIPLE_FUNCTIONS = json.loads('[{"constant":false,"inputs":[],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"bytes32"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint256"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"uint8"}],"name":"a","outputs":[],"type":"function"},{"constant":false,"inputs":[{"name":"","type":"int8"}],"name":"a","outputs":[],"type":"function"}]')  # noqa: E501
-    Contract = web3.eth.contract(abi=MULTIPLE_FUNCTIONS)
+    Contract = web3.vns.contract(abi=MULTIPLE_FUNCTIONS)
     regex = message_regex + diagnosis_ambiguous_encoding
     with pytest.raises(ValidationError, match=regex):
         Contract.functions.a(100).call()
 
 
 def test_function_no_abi(web3):
-    contract = web3.eth.contract()
+    contract = web3.vns.contract()
     with pytest.raises(NoABIFound):
         contract.functions.thisFunctionDoesNotExist().call()
 
 
 def test_call_abi_no_functions(web3):
-    contract = web3.eth.contract(abi=[])
+    contract = web3.vns.contract(abi=[])
     with pytest.raises(NoABIFunctionsFound):
         contract.functions.thisFunctionDoesNotExist().call()
 

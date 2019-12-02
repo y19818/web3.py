@@ -12,7 +12,7 @@ from web3.providers.base import (
     BaseProvider,
 )
 
-NAME = "dump.eth"
+NAME = "dump.vns"
 ADDRESS = "0x0000000000000000000000000000000000000000"
 BALANCE = 0
 
@@ -38,11 +38,11 @@ def test_pass_name_resolver(w3):
         'net_version': '1',
     })
     return_balance = construct_fixture_middleware({
-        'eth_getBalance': BALANCE
+        'vns_getBalance': BALANCE
     })
     w3.middleware_onion.inject(return_chain_on_mainnet, layer=0)
     w3.middleware_onion.inject(return_balance, layer=0)
-    assert w3.eth.getBalance(NAME) == BALANCE
+    assert w3.vns.getBalance(NAME) == BALANCE
 
 
 def test_fail_name_resolver(w3):
@@ -50,5 +50,5 @@ def test_fail_name_resolver(w3):
         'net_version': '2',
     })
     w3.middleware_onion.inject(return_chain_on_mainnet, layer=0)
-    with pytest.raises(InvalidAddress, match=r'.*ethereum\.eth.*'):
-        w3.eth.getBalance("ethereum.eth")
+    with pytest.raises(InvalidAddress, match=r'.*ethereum\.vns.*'):
+        w3.vns.getBalance("ethereum.vns")

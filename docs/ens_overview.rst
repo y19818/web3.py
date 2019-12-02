@@ -56,9 +56,9 @@ Look up the address for an ENS name
 
     # look up the hex representation of the address for a name
 
-    eth_address = ns.address('jasoncarver.eth')
+    vns_address = ns.address('jasoncarver.vns')
 
-    assert eth_address == '0x5B2063246F2191f18F2675ceDB8b28102e957458'
+    assert vns_address == '0x5B2063246F2191f18F2675ceDB8b28102e957458'
 
 
 The ``ENS`` module has no opinion as to which TLD you can use,
@@ -87,7 +87,7 @@ Get owner of name
 
 ::
 
-    eth_address = ns.owner('exchange.eth')
+    vns_address = ns.owner('exchange.vns')
 
 Set up your name
 ~~~~~~~~~~~~~~~~
@@ -100,7 +100,7 @@ address it points to?
 
 ::
 
-    ns.setup_address('jasoncarver.eth', '0x5B2063246F2191f18F2675ceDB8b28102e957458')
+    ns.setup_address('jasoncarver.vns', '0x5B2063246F2191f18F2675ceDB8b28102e957458')
 
 You must already be the owner of the domain (or its parent).
 
@@ -109,20 +109,20 @@ address, you can skip the address
 
 ::
 
-    ns.setup_address('jasoncarver.eth')
+    ns.setup_address('jasoncarver.vns')
 
 You can claim arbitrarily deep subdomains. *Gas costs scale up with the
 number of subdomains!*
 
 ::
 
-    ns.setup_address('supreme.executive.power.derives.from.a.mandate.from.the.masses.jasoncarver.eth')
+    ns.setup_address('supreme.executive.power.derives.from.a.mandate.from.the.masses.jasoncarver.vns')
 
 Wait for the transaction to be mined, then:
 
 ::
 
-    assert ns.address('supreme.executive.power.derives.from.a.mandate.from.the.masses.jasoncarver.eth') == \
+    assert ns.address('supreme.executive.power.derives.from.a.mandate.from.the.masses.jasoncarver.vns') == \
         '0x5B2063246F2191f18F2675ceDB8b28102e957458'
 
 Allow people to find your name using your address
@@ -137,7 +137,7 @@ determine what name points to it. Sometimes this is referred to as
 
 ::
 
-    ns.setup_name('jasoncarver.eth', '0x5B2063246F2191f18F2675ceDB8b28102e957458')
+    ns.setup_name('jasoncarver.vns', '0x5B2063246F2191f18F2675ceDB8b28102e957458')
 
 .. note:: Do not rely on reverse resolution for security.
 
@@ -149,7 +149,7 @@ address returned by :meth:`~ens.main.ENS.address`.
 
 ::
 
-    ns.setup_name('jasoncarver.eth')
+    ns.setup_name('jasoncarver.vns')
 
 If the name doesn't already point to an address, :meth:`~ens.main.ENS.setup_name` will
 call :meth:`~ens.main.ENS.setup_address` for you.
@@ -158,4 +158,4 @@ Wait for the transaction to be mined, then:
 
 ::
 
-    assert ns.name('0x5B2063246F2191f18F2675ceDB8b28102e957458') == 'jasoncarver.eth'
+    assert ns.name('0x5B2063246F2191f18F2675ceDB8b28102e957458') == 'jasoncarver.vns'

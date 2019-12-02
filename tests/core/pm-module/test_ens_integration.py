@@ -1,18 +1,18 @@
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     to_bytes,
 )
-
-from ens import ENS
 from ethpm import (
     ASSETS_DIR,
 )
+
+from ens import ENS
 from web3.exceptions import (
     InvalidAddress,
 )
 from web3.pm import (
-    SimpleRegistry,
+    VyperReferenceRegistry,
 )
 
 
@@ -34,14 +34,14 @@ def ens_setup(deployer):
     # ** Set up ENS contracts **
 
     # remove account that creates ENS, so test transactions don't have write access
-    accounts = w3.eth.accounts
+    accounts = w3.vns.accounts
     ens_key = accounts.pop()
 
     # create ENS contract
     # values borrowed from:
     # https://github.com/ethereum/web3.py/blob/master/tests/ens/conftest.py#L109
-    eth_labelhash = w3.keccak(text='eth')
-    eth_namehash = bytes32(0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae)
+    vns_labelhash = w3.keccak(text='vns')
+   vns_namehash = bytes32(0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae)
     resolver_namehash = bytes32(0xfdd5d5de6dd63db72bbc2d487944ba13bf775b50a80805fe6fcaba9b0fba88f5)
     ens_package = ens_deployer.deploy("ENSRegistry", transaction={"from": ens_key})
     ens_contract = ens_package.deployments.get_instance("ENSRegistry")
@@ -54,15 +54,15 @@ def ens_setup(deployer):
     )
     public_resolver = public_resolver_package.deployments.get_instance("PublicResolver")
 
-    # set 'resolver.eth' to resolve to public resolver
+    # set 'resolver.vns' to resolve to public resolver
     ens_contract.functions.setSubnodeOwner(
         b'\0' * 32,
-        eth_labelhash,
+        vns_labelhash,
         ens_key
     ).transact({'from': ens_key})
 
     ens_contract.functions.setSubnodeOwner(
-        eth_namehash,
+        vns_namehash,
         w3.keccak(text='resolver'),
         ens_key
     ).transact({'from': ens_key})
@@ -77,38 +77,38 @@ def ens_setup(deployer):
         public_resolver.address
     ).transact({'from': ens_key})
 
-    # create .eth auction registrar
-    eth_registrar_package = ens_deployer.deploy(
+    # create .vns auction registrar
+    vns_registrar_package = ens_deployer.deploy(
         "FIFSRegistrar",
         ens_contract.address,
-        eth_namehash,
+        vns_namehash,
         transaction={"from": ens_key}
     )
-    eth_registrar = eth_registrar_package.deployments.get_instance("FIFSRegistrar")
+    vns_registrar = vns_registrar_package.deployments.get_instance("FIFSRegistrar")
 
-    # set '.eth' to resolve to the registrar
+    # set '.vns' to resolve to the registrar
     ens_contract.functions.setResolver(
-        eth_namehash,
+        vns_namehash,
         public_resolver.address
     ).transact({'from': ens_key})
 
     public_resolver.functions.setAddr(
-        eth_namehash,
-        eth_registrar.address
+        vns_namehash,
+        vns_registrar.address
     ).transact({'from': ens_key})
 
-    # set owner of tester.eth to an account controlled by tests
+    # set owner of tester.vns to an account controlled by tests
     ens_contract.functions.setSubnodeOwner(
-        eth_namehash,
+        vns_namehash,
         w3.keccak(text='tester'),
-        w3.eth.accounts[2]  # note that this does not have to be the default, only in the list
+        w3.vns.accounts[2]  # note that this does not have to be the default, only in the list
     ).transact({'from': ens_key})
 
-    # make the registrar the owner of the 'eth' name
+    # make the registrar the owner of the 'vns' name
     ens_contract.functions.setSubnodeOwner(
         b'\0' * 32,
-        eth_labelhash,
-        eth_registrar.address
+        vns_labelhash,
+        vns_registrar.address
     ).transact({'from': ens_key})
     return ENS.fromWeb3(w3, ens_contract.address)
 
@@ -116,7 +116,7 @@ def ens_setup(deployer):
 @pytest.fixture
 def ens(ens_setup, mocker):
     mocker.patch('web3.middleware.stalecheck._isfresh', return_value=True)
-    ens_setup.web3.eth.defaultAccount = ens_setup.web3.eth.coinbase
+    ens_setup.web3.vns.defaultAccount = ens_setup.web3.vns.coinbase
     ens_setup.web3.enable_unstable_package_management_api()
     return ens_setup
 
@@ -124,17 +124,17 @@ def ens(ens_setup, mocker):
 def test_ens_must_be_set_before_ens_methods_can_be_used(ens):
     w3 = ens.web3
     with pytest.raises(InvalidAddress):
-        w3.pm.set_registry("tester.eth")
+        w3.pm.set_registry("tester.vns")
 
 
 def test_web3_ens(ens):
     w3 = ens.web3
     ns = ENS.fromWeb3(w3, ens.ens.address)
     w3.ens = ns
-    registry = SimpleRegistry.deploy_new_instance(w3)
-    w3.ens.setup_address('tester.eth', registry.address)
-    actual_addr = ens.address('tester.eth')
-    w3.pm.set_registry('tester.eth')
+    registry = VyperReferenceRegistry.deploy_new_instance(w3)
+    w3.ens.setup_address('tester.vns', registry.address)
+    actual_addr = ens.address('tester.vns')
+    w3.pm.set_registry('tester.vns')
     assert w3.pm.registry.address == actual_addr
     w3.pm.release_package('owned', '1.0.0', 'ipfs://QmbeVyFLSuEUxiXKwSsEjef6icpdTdA4kGG9BcrJXKNKUW')
     pkg_name, version, manifest_uri = w3.pm.get_release_data('owned', '1.0.0')

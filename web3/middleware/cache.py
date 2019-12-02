@@ -1,85 +1,66 @@
 import functools
 import threading
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Set,
-    Type,
-    cast,
-)
 
 import lru
 
 from web3._utils.caching import (
     generate_cache_key,
 )
-from web3.types import (  # noqa: F401
-    BlockData,
-    Middleware,
-    RPCEndpoint,
-    RPCResponse,
-)
 
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
-
-SIMPLE_CACHE_RPC_WHITELIST = cast(Set[RPCEndpoint], {
+SIMPLE_CACHE_RPC_WHITELIST = {
     'web3_clientVersion',
     'web3_sha3',
     'net_version',
     # 'net_peerCount',
     # 'net_listening',
-    'eth_protocolVersion',
-    # 'eth_syncing',
-    # 'eth_coinbase',
-    # 'eth_mining',
-    # 'eth_hashrate',
-    # 'eth_gasPrice',
-    # 'eth_accounts',
-    # 'eth_blockNumber',
-    # 'eth_getBalance',
-    # 'eth_getStorageAt',
-    # 'eth_getTransactionCount',
-    'eth_getBlockTransactionCountByHash',
-    # 'eth_getBlockTransactionCountByNumber',
-    'eth_getUncleCountByBlockHash',
-    # 'eth_getUncleCountByBlockNumber',
-    # 'eth_getCode',
-    # 'eth_sign',
-    # 'eth_sendTransaction',
-    # 'eth_sendRawTransaction',
-    # 'eth_call',
-    # 'eth_estimateGas',
-    'eth_getBlockByHash',
-    # 'eth_getBlockByNumber',
-    'eth_getTransactionByHash',
-    'eth_getTransactionByBlockHashAndIndex',
-    # 'eth_getTransactionByBlockNumberAndIndex',
-    # 'eth_getTransactionReceipt',
-    'eth_getUncleByBlockHashAndIndex',
-    # 'eth_getUncleByBlockNumberAndIndex',
-    # 'eth_getCompilers',
-    # 'eth_compileLLL',
-    # 'eth_compileSolidity',
-    # 'eth_compileSerpent',
-    # 'eth_newFilter',
-    # 'eth_newBlockFilter',
-    # 'eth_newPendingTransactionFilter',
-    # 'eth_uninstallFilter',
-    # 'eth_getFilterChanges',
-    # 'eth_getFilterLogs',
-    # 'eth_getLogs',
-    # 'eth_getWork',
-    # 'eth_submitWork',
-    # 'eth_submitHashrate',
-})
+    'vns_protocolVersion',
+    # 'vns_syncing',
+    # 'vns_coinbase',
+    # 'vns_mining',
+    # 'vns_hashrate',
+    # 'vns_gasPrice',
+    # 'vns_accounts',
+    # 'vns_blockNumber',
+    # 'vns_getBalance',
+    # 'vns_getStorageAt',
+    # 'vns_getTransactionCount',
+    'vns_getBlockTransactionCountByHash',
+    # 'vns_getBlockTransactionCountByNumber',
+    'vns_getUncleCountByBlockHash',
+    # 'vns_getUncleCountByBlockNumber',
+    # 'vns_getCode',
+    # 'vns_sign',
+    # 'vns_sendTransaction',
+    # 'vns_sendRawTransaction',
+    # 'vns_call',
+    # 'vns_estimateGas',
+    'vns_getBlockByHash',
+    # 'vns_getBlockByNumber',
+    'vns_getTransactionByHash',
+    'vns_getTransactionByBlockHashAndIndex',
+    # 'vns_getTransactionByBlockNumberAndIndex',
+    # 'vns_getTransactionReceipt',
+    'vns_getUncleByBlockHashAndIndex',
+    # 'vns_getUncleByBlockNumberAndIndex',
+    # 'vns_getCompilers',
+    # 'vns_compileLLL',
+    # 'vns_compileSolidity',
+    # 'vns_compileSerpent',
+    # 'vns_newFilter',
+    # 'vns_newBlockFilter',
+    # 'vns_newPendingTransactionFilter',
+    # 'vns_uninstallFilter',
+    # 'vns_getFilterChanges',
+    # 'vns_getFilterLogs',
+    # 'vns_getLogs',
+    # 'vns_getWork',
+    # 'vns_submitWork',
+    # 'vns_submitHashrate',
+}
 
 
-def _should_cache(method: RPCEndpoint, params: Any, response: RPCResponse) -> bool:
+def _should_cache(method, params, response):
     if 'error' in response:
         return False
     elif 'result' not in response:
@@ -91,10 +72,9 @@ def _should_cache(method: RPCEndpoint, params: Any, response: RPCResponse) -> bo
 
 
 def construct_simple_cache_middleware(
-    cache_class: Type[Dict[Any, Any]],
-    rpc_whitelist: Collection[RPCEndpoint]=SIMPLE_CACHE_RPC_WHITELIST,
-    should_cache_fn: Callable[[RPCEndpoint, Any, RPCResponse], bool]=_should_cache
-) -> Middleware:
+        cache_class,
+        rpc_whitelist=SIMPLE_CACHE_RPC_WHITELIST,
+        should_cache_fn=_should_cache):
     """
     Constructs a middleware which caches responses based on the request
     ``method`` and ``params``
@@ -105,15 +85,11 @@ def construct_simple_cache_middleware(
         ``response`` and returns a boolean as to whether the response should be
         cached.
     """
-    def simple_cache_middleware(
-        make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-    ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    def simple_cache_middleware(make_request, web3):
         cache = cache_class()
         lock = threading.Lock()
 
-        def middleware(
-            method: RPCEndpoint, params: Any
-        ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+        def middleware(method, params):
             lock_acquired = lock.acquire(blocking=False)
 
             try:
@@ -135,68 +111,67 @@ def construct_simple_cache_middleware(
 
 
 _simple_cache_middleware = construct_simple_cache_middleware(
-    cache_class=cast(Type[Dict[Any, Any]], functools.partial(lru.LRU, 256)),
+    cache_class=functools.partial(lru.LRU, 256),
 )
 
 
-TIME_BASED_CACHE_RPC_WHITELIST = cast(Set[RPCEndpoint], {
+TIME_BASED_CACHE_RPC_WHITELIST = {
     # 'web3_clientVersion',
     # 'web3_sha3',
     # 'net_version',
     # 'net_peerCount',
     # 'net_listening',
-    # 'eth_protocolVersion',
-    # 'eth_syncing',
-    'eth_coinbase',
-    # 'eth_mining',
-    # 'eth_hashrate',
-    # 'eth_gasPrice',
-    'eth_accounts',
-    # 'eth_blockNumber',
-    # 'eth_getBalance',
-    # 'eth_getStorageAt',
-    # 'eth_getTransactionCount',
-    # 'eth_getBlockTransactionCountByHash',
-    # 'eth_getBlockTransactionCountByNumber',
-    # 'eth_getUncleCountByBlockHash',
-    # 'eth_getUncleCountByBlockNumber',
-    # 'eth_getCode',
-    # 'eth_sign',
-    # 'eth_sendTransaction',
-    # 'eth_sendRawTransaction',
-    # 'eth_call',
-    # 'eth_estimateGas',
-    # 'eth_getBlockByHash',
-    # 'eth_getBlockByNumber',
-    # 'eth_getTransactionByHash',
-    # 'eth_getTransactionByBlockHashAndIndex',
-    # 'eth_getTransactionByBlockNumberAndIndex',
-    # 'eth_getTransactionReceipt',
-    # 'eth_getUncleByBlockHashAndIndex',
-    # 'eth_getUncleByBlockNumberAndIndex',
-    # 'eth_getCompilers',
-    # 'eth_compileLLL',
-    # 'eth_compileSolidity',
-    # 'eth_compileSerpent',
-    # 'eth_newFilter',
-    # 'eth_newBlockFilter',
-    # 'eth_newPendingTransactionFilter',
-    # 'eth_uninstallFilter',
-    # 'eth_getFilterChanges',
-    # 'eth_getFilterLogs',
-    # 'eth_getLogs',
-    # 'eth_getWork',
-    # 'eth_submitWork',
-    # 'eth_submitHashrate',
-})
+    # 'vns_protocolVersion',
+    # 'vns_syncing',
+    'vns_coinbase',
+    # 'vns_mining',
+    # 'vns_hashrate',
+    # 'vns_gasPrice',
+    'vns_accounts',
+    # 'vns_blockNumber',
+    # 'vns_getBalance',
+    # 'vns_getStorageAt',
+    # 'vns_getTransactionCount',
+    # 'vns_getBlockTransactionCountByHash',
+    # 'vns_getBlockTransactionCountByNumber',
+    # 'vns_getUncleCountByBlockHash',
+    # 'vns_getUncleCountByBlockNumber',
+    # 'vns_getCode',
+    # 'vns_sign',
+    # 'vns_sendTransaction',
+    # 'vns_sendRawTransaction',
+    # 'vns_call',
+    # 'vns_estimateGas',
+    # 'vns_getBlockByHash',
+    # 'vns_getBlockByNumber',
+    # 'vns_getTransactionByHash',
+    # 'vns_getTransactionByBlockHashAndIndex',
+    # 'vns_getTransactionByBlockNumberAndIndex',
+    # 'vns_getTransactionReceipt',
+    # 'vns_getUncleByBlockHashAndIndex',
+    # 'vns_getUncleByBlockNumberAndIndex',
+    # 'vns_getCompilers',
+    # 'vns_compileLLL',
+    # 'vns_compileSolidity',
+    # 'vns_compileSerpent',
+    # 'vns_newFilter',
+    # 'vns_newBlockFilter',
+    # 'vns_newPendingTransactionFilter',
+    # 'vns_uninstallFilter',
+    # 'vns_getFilterChanges',
+    # 'vns_getFilterLogs',
+    # 'vns_getLogs',
+    # 'vns_getWork',
+    # 'vns_submitWork',
+    # 'vns_submitHashrate',
+}
 
 
 def construct_time_based_cache_middleware(
-    cache_class: Callable[..., Dict[Any, Any]],
-    cache_expire_seconds: int=15,
-    rpc_whitelist: Collection[RPCEndpoint]=TIME_BASED_CACHE_RPC_WHITELIST,
-    should_cache_fn: Callable[[RPCEndpoint, Any, RPCResponse], bool]=_should_cache
-) -> Middleware:
+        cache_class,
+        cache_expire_seconds=15,
+        rpc_whitelist=TIME_BASED_CACHE_RPC_WHITELIST,
+        should_cache_fn=_should_cache):
     """
     Constructs a middleware which caches responses based on the request
     ``method`` and ``params`` for a maximum amount of time as specified
@@ -209,13 +184,11 @@ def construct_time_based_cache_middleware(
         ``response`` and returns a boolean as to whether the response should be
         cached.
     """
-    def time_based_cache_middleware(
-        make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-    ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    def time_based_cache_middleware(make_request, web3):
         cache = cache_class()
         lock = threading.Lock()
 
-        def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+        def middleware(method, params):
             lock_acquired = lock.acquire(blocking=False)
 
             try:
@@ -252,64 +225,65 @@ _time_based_cache_middleware = construct_time_based_cache_middleware(
 )
 
 
-BLOCK_NUMBER_RPC_WHITELIST = cast(Set[RPCEndpoint], {
+BLOCK_NUMBER_RPC_WHITELIST = {
     # 'web3_clientVersion',
     # 'web3_sha3',
     # 'net_version',
     # 'net_peerCount',
     # 'net_listening',
-    # 'eth_protocolVersion',
-    # 'eth_syncing',
-    # 'eth_coinbase',
-    # 'eth_mining',
-    # 'eth_hashrate',
-    'eth_gasPrice',
-    # 'eth_accounts',
-    'eth_blockNumber',
-    'eth_getBalance',
-    'eth_getStorageAt',
-    'eth_getTransactionCount',
-    # 'eth_getBlockTransactionCountByHash',
-    'eth_getBlockTransactionCountByNumber',
-    # 'eth_getUncleCountByBlockHash',
-    'eth_getUncleCountByBlockNumber',
-    'eth_getCode',
-    # 'eth_sign',
-    # 'eth_sendTransaction',
-    # 'eth_sendRawTransaction',
-    'eth_call',
-    'eth_estimateGas',
-    # 'eth_getBlockByHash',
-    'eth_getBlockByNumber',
-    # 'eth_getTransactionByHash',
-    # 'eth_getTransactionByBlockHashAndIndex',
-    'eth_getTransactionByBlockNumberAndIndex',
-    'eth_getTransactionReceipt',
-    # 'eth_getUncleByBlockHashAndIndex',
-    'eth_getUncleByBlockNumberAndIndex',
-    # 'eth_getCompilers',
-    # 'eth_compileLLL',
-    # 'eth_compileSolidity',
-    # 'eth_compileSerpent',
-    # 'eth_newFilter',
-    # 'eth_newBlockFilter',
-    # 'eth_newPendingTransactionFilter',
-    # 'eth_uninstallFilter',
-    # 'eth_getFilterChanges',
-    # 'eth_getFilterLogs',
-    'eth_getLogs',
-    # 'eth_getWork',
-    # 'eth_submitWork',
-    # 'eth_submitHashrate',
-})
+    # 'vns_protocolVersion',
+    # 'vns_syncing',
+    # 'vns_coinbase',
+    # 'vns_mining',
+    # 'vns_hashrate',
+    'vns_gasPrice',
+    # 'vns_accounts',
+    'vns_blockNumber',
+    'vns_getBalance',
+    'vns_getStorageAt',
+    'vns_getTransactionCount',
+    # 'vns_getBlockTransactionCountByHash',
+    'vns_getBlockTransactionCountByNumber',
+    # 'vns_getUncleCountByBlockHash',
+    'vns_getUncleCountByBlockNumber',
+    'vns_getCode',
+    # 'vns_sign',
+    # 'vns_sendTransaction',
+    # 'vns_sendRawTransaction',
+    'vns_call',
+    'vns_estimateGas',
+    # 'vns_getBlockByHash',
+    'vns_getBlockByNumber',
+    # 'vns_getTransactionByHash',
+    # 'vns_getTransactionByBlockHashAndIndex',
+    'vns_getTransactionByBlockNumberAndIndex',
+    'vns_getTransactionReceipt',
+    # 'vns_getUncleByBlockHashAndIndex',
+    'vns_getUncleByBlockNumberAndIndex',
+    # 'vns_getCompilers',
+    # 'vns_compileLLL',
+    # 'vns_compileSolidity',
+    # 'vns_compileSerpent',
+    # 'vns_newFilter',
+    # 'vns_newBlockFilter',
+    # 'vns_newPendingTransactionFilter',
+    # 'vns_uninstallFilter',
+    # 'vns_getFilterChanges',
+    # 'vns_getFilterLogs',
+    'vns_getLogs',
+    # 'vns_getWork',
+    # 'vns_submitWork',
+    # 'vns_submitHashrate',
+}
+
 
 AVG_BLOCK_TIME_KEY = 'avg_block_time'
 AVG_BLOCK_SAMPLE_SIZE_KEY = 'avg_block_sample_size'
 AVG_BLOCK_TIME_UPDATED_AT_KEY = 'avg_block_time_updated_at'
 
 
-def _is_latest_block_number_request(method: RPCEndpoint, params: Any) -> bool:
-    if method != 'eth_getBlockByNumber':
+def _is_latest_block_number_request(method, params):
+    if method != 'vns_getBlockByNumber':
         return False
     elif params[:1] == ['latest']:
         return True
@@ -317,12 +291,11 @@ def _is_latest_block_number_request(method: RPCEndpoint, params: Any) -> bool:
 
 
 def construct_latest_block_based_cache_middleware(
-    cache_class: Callable[..., Dict[Any, Any]],
-    rpc_whitelist: Collection[RPCEndpoint]=BLOCK_NUMBER_RPC_WHITELIST,
-    average_block_time_sample_size: int=240,
-    default_average_block_time: int=15,
-    should_cache_fn: Callable[[RPCEndpoint, Any, RPCResponse], bool]=_should_cache
-) -> Middleware:
+        cache_class,
+        rpc_whitelist=BLOCK_NUMBER_RPC_WHITELIST,
+        average_block_time_sample_size=240,
+        default_average_block_time=15,
+        should_cache_fn=_should_cache):
     """
     Constructs a middleware which caches responses based on the request
     ``method``, ``params``, and the current latest block hash.
@@ -341,13 +314,11 @@ def construct_latest_block_based_cache_middleware(
         a new block when the last seen latest block is older than the average
         block time.
     """
-    def latest_block_based_cache_middleware(
-        make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-    ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    def latest_block_based_cache_middleware(make_request, web3):
         cache = cache_class()
-        block_info: BlockData = {}
+        block_info = {}
 
-        def _update_block_info_cache() -> None:
+        def _update_block_info_cache():
             avg_block_time = block_info.get(AVG_BLOCK_TIME_KEY, default_average_block_time)
             avg_block_sample_size = block_info.get(AVG_BLOCK_SAMPLE_SIZE_KEY, 0)
             avg_block_time_updated_at = block_info.get(AVG_BLOCK_TIME_UPDATED_AT_KEY, 0)
@@ -365,12 +336,12 @@ def construct_latest_block_based_cache_middleware(
                 # measured by blocks is greater than or equal to the number of
                 # blocks sampled then we need to recompute the average block
                 # time.
-                latest_block = web3.eth.getBlock('latest')
+                latest_block = web3.vns.getBlock('latest')
                 ancestor_block_number = max(
                     0,
                     latest_block['number'] - average_block_time_sample_size,
                 )
-                ancestor_block = web3.eth.getBlock(ancestor_block_number)
+                ancestor_block = web3.vns.getBlock(ancestor_block_number)
                 sample_size = latest_block['number'] - ancestor_block_number
 
                 block_info[AVG_BLOCK_SAMPLE_SIZE_KEY] = sample_size
@@ -388,14 +359,14 @@ def construct_latest_block_based_cache_middleware(
 
                 # latest block is too old so update cache
                 if time_since_latest_block > avg_block_time:
-                    block_info['latest_block'] = web3.eth.getBlock('latest')
+                    block_info['latest_block'] = web3.vns.getBlock('latest')
             else:
                 # latest block has not been fetched so we fetch it.
-                block_info['latest_block'] = web3.eth.getBlock('latest')
+                block_info['latest_block'] = web3.vns.getBlock('latest')
 
         lock = threading.Lock()
 
-        def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+        def middleware(method, params):
             lock_acquired = lock.acquire(blocking=False)
 
             try:

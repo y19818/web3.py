@@ -7,7 +7,6 @@ from web3 import Web3
 
 from .common import (
     CommonGoEthereumShhModuleTest,
-    GoEthereumAdminModuleTest,
     GoEthereumEthModuleTest,
     GoEthereumNetModuleTest,
     GoEthereumPersonalModuleTest,
@@ -39,7 +38,7 @@ def geth_command_arguments(geth_binary, datadir, rpc_port):
         '--fakepow',
         '--rpc',
         '--rpcport', rpc_port,
-        '--rpcapi', 'admin,db,eth,net,web3,personal,shh,web3',
+        '--rpcapi', 'db,vns,net,web3,personal,shh,web3',
         '--ipcdisable',
     )
 
@@ -47,30 +46,12 @@ def geth_command_arguments(geth_binary, datadir, rpc_port):
 @pytest.fixture(scope="module")
 def web3(geth_process, endpoint_uri):
     wait_for_http(endpoint_uri)
-    _web3 = Web3(Web3.HTTPProvider(endpoint_uri))
+    _web3 = Web3 (Web3.HTTPProvider(endpoint_uri))
     return _web3
 
 
 class TestGoEthereumTest(GoEthereumTest):
     pass
-
-
-class TestGoEthereumAdminModuleTest(GoEthereumAdminModuleTest):
-    @pytest.mark.xfail(reason="running geth with the --nodiscover flag doesn't allow peer addition")
-    def test_admin_peers(web3):
-        super().test_admin_peers(web3)
-
-    @pytest.mark.xfail(reason='Only one RPC endpoint is allowed to be active at any time')
-    def test_admin_start_stop_rpc(web3):
-        super().test_admin_start_stop_rpc(web3)
-
-    @pytest.mark.xfail(reason='Only one RPC endpoint is allowed to be active at any time')
-    def test_admin_startRPC(web3):
-        super().test_admin_stopRPC(web3)
-
-    @pytest.mark.xfail(reason='Only one RPC endpoint is allowed to be active at any time')
-    def test_admin_stopRPC(web3):
-        super().test_admin_stopRPC(web3)
 
 
 class TestGoEthereumEthModuleTest(GoEthereumEthModuleTest):

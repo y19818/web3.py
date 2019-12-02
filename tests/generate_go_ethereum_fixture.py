@@ -10,7 +10,7 @@ import sys
 import tempfile
 import time
 
-from eth_utils.curried import (
+from vnsutils.curried import (
     apply_formatter_if,
     is_bytes,
     is_checksum_address,
@@ -20,10 +20,6 @@ from eth_utils.curried import (
     to_hex,
     to_text,
     to_wei,
-)
-from eth_utils.toolz import (
-    merge,
-    valmap,
 )
 
 from tests.utils import (
@@ -38,6 +34,10 @@ from web3._utils.module_testing.emitter_contract import (
 from web3._utils.module_testing.math_contract import (
     MATH_ABI,
     MATH_BYTECODE,
+)
+from web3._utils.toolz import (
+    merge,
+    valmap,
 )
 
 COINBASE = '0xdc544d1aa88ff8bbd2f2aec754b1f1e99e1812fd'
@@ -255,7 +255,7 @@ def generate_go_ethereum_fixture(destination_dir):
                 geth_port=geth_port):
 
             wait_for_socket(geth_ipc_path)
-            web3 = Web3(Web3.IPCProvider(geth_ipc_path))
+            web3 = Web3 (Web3.IPCProvider(geth_ipc_path))
             chain_data = setup_chain_state(web3)
             # close geth by exiting context
             # must be closed before copying data dir
@@ -271,7 +271,7 @@ def generate_go_ethereum_fixture(destination_dir):
                 geth_port=geth_port):
 
             wait_for_socket(geth_ipc_path)
-            web3 = Web3(Web3.IPCProvider(geth_ipc_path))
+            web3 = Web3 (Web3.IPCProvider(geth_ipc_path))
             verify_chain_state(web3, chain_data)
 
         static_data = {
@@ -286,26 +286,26 @@ def generate_go_ethereum_fixture(destination_dir):
 
 
 def verify_chain_state(web3, chain_data):
-    receipt = web3.eth.waitForTransactionReceipt(chain_data['mined_txn_hash'])
-    latest = web3.eth.getBlock('latest')
+    receipt = web3.vns.waitForTransactionReceipt(chain_data['mined_txn_hash'])
+    latest = web3.vns.getBlock('latest')
     assert receipt.blockNumber <= latest.number
 
 
 def mine_transaction_hash(web3, txn_hash):
     web3.geth.miner.start(1)
     try:
-        return web3.eth.waitForTransactionReceipt(txn_hash, timeout=60)
+        return web3.vns.waitForTransactionReceipt(txn_hash, timeout=60)
     finally:
         web3.geth.miner.stop()
 
 
 def mine_block(web3):
-    origin_block_number = web3.eth.blockNumber
+    origin_block_number = web3.vns.blockNumber
 
     start_time = time.time()
     web3.geth.miner.start(1)
     while time.time() < start_time + 60:
-        block_number = web3.eth.blockNumber
+        block_number = web3.vns.blockNumber
         if block_number > origin_block_number:
             web3.geth.miner.stop()
             return block_number
@@ -316,8 +316,8 @@ def mine_block(web3):
 
 
 def deploy_contract(web3, name, factory):
-    web3.geth.personal.unlockAccount(web3.eth.coinbase, KEYFILE_PW)
-    deploy_txn_hash = factory.constructor().transact({'from': web3.eth.coinbase})
+    web3.geth.personal.unlockAccount(web3.vns.coinbase, KEYFILE_PW)
+    deploy_txn_hash = factory.constructor().transact({'from': web3.vns.coinbase})
     print('{0}_CONTRACT_DEPLOY_HASH: '.format(name.upper()), deploy_txn_hash)
     deploy_receipt = mine_transaction_hash(web3, deploy_txn_hash)
     print('{0}_CONTRACT_DEPLOY_TRANSACTION_MINED'.format(name.upper()))
@@ -328,14 +328,14 @@ def deploy_contract(web3, name, factory):
 
 
 def setup_chain_state(web3):
-    coinbase = web3.eth.coinbase
+    coinbase = web3.vns.coinbase
 
     assert is_same_address(coinbase, COINBASE)
 
     #
     # Math Contract
     #
-    math_contract_factory = web3.eth.contract(
+    math_contract_factory = web3.vns.contract(
         abi=MATH_ABI,
         bytecode=MATH_BYTECODE,
     )
@@ -345,7 +345,7 @@ def setup_chain_state(web3):
     #
     # Emitter Contract
     #
-    emitter_contract_factory = web3.eth.contract(
+    emitter_contract_factory = web3.vns.contract(
         abi=EMITTER_ABI,
         bytecode=EMITTER_BYTECODE,
     )
@@ -355,11 +355,11 @@ def setup_chain_state(web3):
     txn_hash_with_log = emitter_contract.functions.logDouble(
         which=EMITTER_ENUM['LogDoubleWithIndex'], arg0=12345, arg1=54321,
     ).transact({
-        'from': web3.eth.coinbase,
+        'from': web3.vns.coinbase,
     })
     print('TXN_HASH_WITH_LOG:', txn_hash_with_log)
     txn_receipt_with_log = mine_transaction_hash(web3, txn_hash_with_log)
-    block_with_log = web3.eth.getBlock(txn_receipt_with_log['blockHash'])
+    block_with_log = web3.vns.getBlock(txn_receipt_with_log['blockHash'])
     print('BLOCK_HASH_WITH_LOG:', block_with_log['hash'])
 
     #
@@ -367,7 +367,7 @@ def setup_chain_state(web3):
     #
     empty_block_number = mine_block(web3)
     print('MINED_EMPTY_BLOCK')
-    empty_block = web3.eth.getBlock(empty_block_number)
+    empty_block = web3.vns.getBlock(empty_block_number)
     assert is_dict(empty_block)
     assert not empty_block['transactions']
     print('EMPTY_BLOCK_HASH:', empty_block['hash'])
@@ -377,16 +377,16 @@ def setup_chain_state(web3):
     #
     web3.geth.personal.unlockAccount(coinbase, KEYFILE_PW)
     web3.geth.miner.start(1)
-    mined_txn_hash = web3.eth.sendTransaction({
+    mined_txn_hash = web3.vns.sendTransaction({
         'from': coinbase,
         'to': coinbase,
         'value': 1,
         'gas': 21000,
-        'gas_price': web3.eth.gasPrice,
+        'gas_price': web3.vns.gasPrice,
     })
     mined_txn_receipt = mine_transaction_hash(web3, mined_txn_hash)
     print('MINED_TXN_HASH:', mined_txn_hash)
-    block_with_txn = web3.eth.getBlock(mined_txn_receipt['blockHash'])
+    block_with_txn = web3.vns.getBlock(mined_txn_receipt['blockHash'])
     print('BLOCK_WITH_TXN_HASH:', block_with_txn['hash'])
 
     geth_fixture = {

@@ -1,37 +1,21 @@
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-)
 
 from web3.exceptions import (
     StaleBlockchain,
 )
-from web3.types import (
-    BlockData,
-    Middleware,
-    RPCEndpoint,
-    RPCResponse,
-)
-
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
 
 SKIP_STALECHECK_FOR_METHODS = set([
-    'eth_getBlockByNumber',
+    'vns_getBlockByNumber',
 ])
 
 
-def _isfresh(block: BlockData, allowable_delay: int) -> bool:
+def _isfresh(block, allowable_delay):
     return block and time.time() - block['timestamp'] <= allowable_delay
 
 
 def make_stalecheck_middleware(
-    allowable_delay: int,
-    skip_stalecheck_for_methods: Collection[str]=SKIP_STALECHECK_FOR_METHODS
-) -> Middleware:
+        allowable_delay,
+        skip_stalecheck_for_methods=SKIP_STALECHECK_FOR_METHODS):
     """
     Use to require that a function will run only of the blockchain is recently updated.
 
@@ -45,17 +29,15 @@ def make_stalecheck_middleware(
     if allowable_delay <= 0:
         raise ValueError("You must set a positive allowable_delay in seconds for this middleware")
 
-    def stalecheck_middleware(
-        make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-    ) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    def stalecheck_middleware(make_request, web3):
         cache = {'latest': None}
 
-        def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+        def middleware(method, params):
             if method not in skip_stalecheck_for_methods:
                 if _isfresh(cache['latest'], allowable_delay):
                     pass
                 else:
-                    latest = web3.eth.getBlock('latest')
+                    latest = web3.vns.getBlock('latest')
                     if _isfresh(latest, allowable_delay):
                         cache['latest'] = latest
                     else:

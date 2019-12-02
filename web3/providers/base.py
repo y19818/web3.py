@@ -1,13 +1,6 @@
 import itertools
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Sequence,
-    Tuple,
-)
 
-from eth_utils import (
+from vns_utils import (
     to_bytes,
     to_text,
 )
@@ -18,42 +11,26 @@ from web3._utils.encoding import (
 from web3.middleware import (
     combine_middlewares,
 )
-from web3.types import (
-    Middleware,
-    MiddlewareOnion,
-    RPCEndpoint,
-    RPCResponse,
-)
-
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
 
 
 class BaseProvider:
-    _middlewares: Tuple[Middleware, ...] = ()
-    # a tuple of (all_middlewares, request_func)
-    _request_func_cache: Tuple[Tuple[Middleware, ...], Callable[..., RPCResponse]] = (None, None)
+    _middlewares = ()
+    _request_func_cache = (None, None)  # a tuple of (all_middlewares, request_func)
 
     @property
-    def middlewares(self) -> Tuple[Middleware, ...]:
+    def middlewares(self):
         return self._middlewares
 
     @middlewares.setter
-    def middlewares(
-        self, values: MiddlewareOnion
-    ) -> None:
-        # tuple(values) converts to MiddlewareOnion -> Tuple[Middleware, ...]
-        self._middlewares = tuple(values)  # type: ignore
+    def middlewares(self, values):
+        self._middlewares = tuple(values)
 
-    def request_func(
-        self, web3: "Web3", outer_middlewares: MiddlewareOnion
-    ) -> Callable[..., RPCResponse]:
+    def request_func(self, web3, outer_middlewares):
         """
         @param outer_middlewares is an iterable of middlewares, ordered by first to execute
         @returns a function that calls all the middleware and eventually self.make_request()
         """
-        # type ignored b/c tuple(MiddlewareOnion) converts to tuple of middlewares
-        all_middlewares: Tuple[Middleware] = tuple(outer_middlewares) + tuple(self.middlewares)  # type: ignore # noqa: E501
+        all_middlewares = tuple(outer_middlewares) + tuple(self.middlewares)
 
         cache_key = self._request_func_cache[0]
         if cache_key is None or cache_key != all_middlewares:
@@ -63,31 +40,29 @@ class BaseProvider:
             )
         return self._request_func_cache[-1]
 
-    def _generate_request_func(
-        self, web3: "Web3", middlewares: Sequence[Middleware]
-    ) -> Callable[..., RPCResponse]:
+    def _generate_request_func(self, web3, middlewares):
         return combine_middlewares(
             middlewares=middlewares,
             web3=web3,
             provider_request_fn=self.make_request,
         )
 
-    def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+    def make_request(self, method, params):
         raise NotImplementedError("Providers must implement this method")
 
-    def isConnected(self) -> bool:
+    def isConnected(self):
         raise NotImplementedError("Providers must implement this method")
 
 
 class JSONBaseProvider(BaseProvider):
-    def __init__(self) -> None:
+    def __init__(self):
         self.request_counter = itertools.count()
 
-    def decode_rpc_response(self, raw_response: bytes) -> RPCResponse:
-        text_response = to_text(raw_response)
+    def decode_rpc_response(self, response):
+        text_response = to_text(response)
         return FriendlyJsonSerde().json_decode(text_response)
 
-    def encode_rpc_request(self, method: RPCEndpoint, params: Any) -> bytes:
+    def encode_rpc_request(self, method, params):
         rpc_dict = {
             "jsonrpc": "2.0",
             "method": method,
@@ -97,9 +72,9 @@ class JSONBaseProvider(BaseProvider):
         encoded = FriendlyJsonSerde().json_encode(rpc_dict)
         return to_bytes(text=encoded)
 
-    def isConnected(self) -> bool:
+    def isConnected(self):
         try:
-            response = self.make_request(RPCEndpoint('web3_clientVersion'), [])
+            response = self.make_request('web3_clientVersion', [])
         except IOError:
             return False
 

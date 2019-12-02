@@ -18,7 +18,7 @@ def w3_base():
 @pytest.fixture
 def result_generator_middleware():
     return construct_result_generator_middleware({
-        'eth_getLogs': lambda _, params: params,
+        'vns_getLogs': lambda _, params: params,
     })
 
 
@@ -29,7 +29,7 @@ def w3(w3_base, result_generator_middleware):
     return w3_base
 
 
-def test_eth_getLogs_param_normalization(w3):
-    result = w3.eth.getLogs({
+def test_vns_getLogs_param_normalization(w3):
+    result = w3.vns.getLogs({
         'from': 'latest', 'address': '0x1111111111111111111111111111111111111111'})
     assert isinstance(result[0]['address'], list)

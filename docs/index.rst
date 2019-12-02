@@ -25,8 +25,8 @@ Contents
     examples
     troubleshooting
     web3.main
-    web3.eth
-    web3.eth.account
+    web3.vns
+    web3.vns.account
     web3.pm
     web3.net
     web3.miner
@@ -34,9 +34,8 @@ Contents
     web3.parity
     gas_price
     ens
-    ethpm
     internals
-    abi_types
+    conventions
     releases
 
 Indices and tables

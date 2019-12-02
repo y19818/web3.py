@@ -1,7 +1,5 @@
-from eth_utils import (
-    apply_formatters_to_dict,
-)
-from eth_utils.toolz import (
+import web3._utils.formatters
+from web3._utils.toolz import (
     concat,
 )
 
@@ -29,7 +27,7 @@ class PropertyCheckingFactory(type):
             verify_attr(name, key, all_keys)
 
         if normalizers:
-            processed_namespace = apply_formatters_to_dict(
+            processed_namespace = web3._utils.formatters.apply_formatters_to_dict(
                 normalizers,
                 namespace,
             )

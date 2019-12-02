@@ -76,9 +76,9 @@ RPC APIS
 Each ``web3`` instance also exposes these namespaced APIs.
 
 
-.. py:attribute:: Web3.eth
+.. py:attribute:: Web3.vns
 
-    See :doc:`./web3.eth`
+    See :doc:`./web3.vns`
 
 .. py:attribute:: Web3.miner
 

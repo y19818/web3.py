@@ -2,10 +2,10 @@
 import json
 import re
 
-from eth_abi.encoding import (
+from vns_abi.encoding import (
     BaseArrayEncoder,
 )
-from eth_utils import (
+from vns_utils import (
     add_0x_prefix,
     big_endian_to_int,
     decode_hex,
@@ -18,9 +18,6 @@ from eth_utils import (
     is_list_like,
     remove_0x_prefix,
     to_hex,
-)
-from eth_utils.toolz import (
-    curry,
 )
 from hexbytes import (
     HexBytes,
@@ -36,6 +33,9 @@ from web3._utils.abi import (
     is_uint_type,
     size_of_type,
     sub_type_of_array_type,
+)
+from web3._utils.toolz import (
+    curry,
 )
 from web3._utils.validation import (
     assert_one_val,
@@ -296,13 +296,13 @@ class DynamicArrayPackedEncoder(BaseArrayEncoder):
         return encoded_value
 
 
-#  TODO: Replace with eth-abi packed encoder once web3 requires eth-abi>=2
+#  TODO: Replace with vns-abi packed encoder once web3 requires vns-abi>=2
 def encode_single_packed(_type, value):
     import codecs
-    from eth_abi import (
+    from vns_abi import (
         grammar as abi_type_parser,
     )
-    from eth_abi.registry import has_arrlist, registry
+    from vns_abi.registry import has_arrlist, registry
     abi_type = abi_type_parser.parse(_type)
     if has_arrlist(_type):
         item_encoder = registry.get_encoder(abi_type.item_type.to_type_str())

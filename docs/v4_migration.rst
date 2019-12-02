@@ -70,14 +70,14 @@ printing out new block hashes as they appear:
     >>> def new_block_callback(block_hash):
     ...     print "New Block: {0}".format(block_hash)
     ...
-    >>> new_block_filter = web3.eth.filter('latest')
+    >>> new_block_filter = web3.vns.filter('latest')
     >>> new_block_filter.watch(new_block_callback)
 
 In v4, that same logic:
 
 .. code-block:: python
 
-    >>> new_block_filter = web3.eth.filter('latest')
+    >>> new_block_filter = web3.vns.filter('latest')
     >>> for block_hash in new_block_filter.get_new_entries():
     ...     print("New Block: {}".format(block_hash))
 
@@ -94,14 +94,14 @@ However, if you were using web3.py for testing contracts,
 you might have been using TestRPCProvider or EthereumTesterProvider. 
 
 In v4 there is a new :class:`EthereumTesterProvider`, and the old v3 implementation has been 
-removed. Web3.py v4 uses :class:`eth_tester.main.EthereumTester` under the hood, instead
-of eth-testrpc. While ``eth-tester`` is still in beta, many parts are
+removed. Web3.py v4 uses :class:`vns_tester.main.EthereumTester` under the hood, instead
+of vns-testrpc. While ``vns-tester`` is still in beta, many parts are
 already in better shape than testrpc, so we decided to replace it in v4.
 
 If you were using TestRPC, or were explicitly importing EthereumTesterProvider, like:
 ``from web3.providers.tester import EthereumTesterProvider``, then you will need to update.
 
-With v4 you should import with ``from web3 import EthereumTesterProvider``. As before, you'll 
+With v4 you should import with ``from web3 import EthereumTesterProvider``. As before, you'll
 need to install Web3.py with the ``tester`` extra to get these features, like:
 
 .. code-block:: bash

@@ -1,13 +1,10 @@
-from eth_abi.codec import (
-    ABICodec,
-)
-from eth_utils import (
+from vns_utils import (
     add_0x_prefix,
     apply_to_return_value,
     from_wei,
     is_address,
     is_checksum_address,
-    keccak as eth_utils_keccak,
+    keccak as vns_utils_keccak,
     remove_0x_prefix,
     to_checksum_address,
     to_wei,
@@ -15,15 +12,9 @@ from eth_utils import (
 from hexbytes import (
     HexBytes,
 )
-from typing import Any, cast, Dict, List, Sequence, TYPE_CHECKING
-
-from eth_typing import HexStr, Primitives
-from eth_typing.abi import TypeStr
 
 from ens import ENS
 from web3._utils.abi import (
-    build_default_registry,
-    build_strict_registry,
     map_abi_data,
 )
 from web3._utils.decorators import (
@@ -47,8 +38,8 @@ from web3._utils.module import (
 from web3._utils.normalizers import (
     abi_ens_resolver,
 )
-from web3.eth import (
-    Eth,
+from web3.vns import (
+    Bbbbbbbb,
 )
 from web3.geth import (
     Geth,
@@ -72,10 +63,7 @@ from web3.parity import (
     ParityPersonal,
     ParityShh,
 )
-from web3.providers import (
-    BaseProvider,
-)
-from web3.providers.eth_tester import (
+from web3.providers.vns_tester import (
     EthereumTesterProvider,
 )
 from web3.providers.ipc import (
@@ -90,21 +78,14 @@ from web3.providers.websocket import (
 from web3.testing import (
     Testing,
 )
-from web3.types import (  # noqa: F401
-    Middleware,
-    MiddlewareOnion,
-)
 from web3.version import (
     Version,
 )
 
-if TYPE_CHECKING:
-    from web3.pm import PM  # noqa: F401
 
-
-def get_default_modules() -> Dict[str, Sequence[Any]]:
+def get_default_modules():
     return {
-        "eth": (Eth,),
+        "vns": (Bbbbbbbb,),
         "net": (Net,),
         "version": (Version,),
         "parity": (Parity, {
@@ -151,16 +132,7 @@ class Web3:
     isChecksumAddress = staticmethod(is_checksum_address)
     toChecksumAddress = staticmethod(to_checksum_address)
 
-    # mypy Types
-    eth: Eth
-
-    def __init__(
-        self,
-        provider: BaseProvider=None,
-        middlewares: Sequence[Any]=None,
-        modules: Dict[str, Sequence[Any]]=None,
-        ens: ENS=cast(ENS, empty)
-    ) -> None:
+    def __init__(self, provider=None, middlewares=None, modules=None, ens=empty):
         self.manager = self.RequestManager(self, provider, middlewares)
 
         if modules is None:
@@ -168,43 +140,40 @@ class Web3:
 
         attach_modules(self, modules)
 
-        self.codec = ABICodec(build_default_registry())
-
         self.ens = ens
 
     @property
-    def middleware_onion(self) -> MiddlewareOnion:
+    def middleware_onion(self):
         return self.manager.middleware_onion
 
     @property
-    def provider(self) -> BaseProvider:
+    def provider(self):
         return self.manager.provider
 
     @provider.setter
-    def provider(self, provider: BaseProvider) -> None:
+    def provider(self, provider):
         self.manager.provider = provider
 
     @property
-    def clientVersion(self) -> int:
+    def clientVersion(self):
         return self.manager.request_blocking("web3_clientVersion", [])
 
     @property
-    def api(self) -> str:
+    def api(self):
         from web3 import __version__
         return __version__
 
-    @staticmethod
     @deprecated_for("keccak")
     @apply_to_return_value(HexBytes)
-    def sha3(primitive: Primitives=None, text: str=None, hexstr: HexStr=None) -> bytes:
+    def sha3(primitive=None, text=None, hexstr=None):
         return Web3.keccak(primitive, text, hexstr)
 
     @staticmethod
     @apply_to_return_value(HexBytes)
-    def keccak(primitive: Primitives=None, text: str=None, hexstr: HexStr=None) -> bytes:
+    def keccak(primitive=None, text=None, hexstr=None):
         if isinstance(primitive, (bytes, int, type(None))):
             input_bytes = to_bytes(primitive, hexstr=hexstr, text=text)
-            return eth_utils_keccak(input_bytes)
+            return vns_utils_keccak(input_bytes)
 
         raise TypeError(
             "You called keccak with first arg %r and keywords %r. You must call it with one of "
@@ -217,11 +186,11 @@ class Web3:
 
     @combomethod
     @deprecated_for("solidityKeccak")
-    def soliditySha3(cls, abi_types: List[TypeStr], values: List[Any]) -> bytes:
+    def soliditySha3(cls, abi_types, values):
         return cls.solidityKeccak(abi_types, values)
 
     @combomethod
-    def solidityKeccak(cls, abi_types: List[TypeStr], values: List[Any]) -> bytes:
+    def solidityKeccak(cls, abi_types, values):
         """
         Executes keccak256 exactly as Solidity does.
         Takes list of abi_types as inputs -- `[uint24, int8[], bool]`
@@ -239,35 +208,31 @@ class Web3:
             w3 = cls
         normalized_values = map_abi_data([abi_ens_resolver(w3)], abi_types, values)
 
-        hex_string = add_0x_prefix(HexStr(''.join(
+        hex_string = add_0x_prefix(''.join(
             remove_0x_prefix(hex_encode_abi_type(abi_type, value))
             for abi_type, value
             in zip(abi_types, normalized_values)
-        )))
+        ))
         return cls.keccak(hexstr=hex_string)
 
-    def isConnected(self) -> bool:
+    def isConnected(self):
         return self.provider.isConnected()
 
-    def is_encodable(self, _type: TypeStr, value: Any) -> bool:
-        return self.codec.is_encodable(_type, value)
-
     @property
-    def ens(self) -> ENS:
-        if self._ens is cast(ENS, empty):
+    def ens(self):
+        if self._ens is empty:
             return ENS.fromWeb3(self)
         else:
             return self._ens
 
     @ens.setter
-    def ens(self, new_ens: ENS) -> None:
+    def ens(self, new_ens):
         self._ens = new_ens
 
     @property
-    def pm(self) -> "PM":
+    def pm(self):
         if hasattr(self, '_pm'):
-            # ignored b/c property is dynamically set via enable_unstable_package_management_api
-            return self._pm  # type: ignore
+            return self._pm
         else:
             raise AttributeError(
                 "The Package Management feature is disabled by default until "
@@ -275,10 +240,6 @@ class Web3:
                 "`w3.enable_unstable_package_management_api()` and try again."
             )
 
-    def enable_unstable_package_management_api(self) -> None:
-        from web3.pm import PM  # noqa: F811
-        if not hasattr(self, '_pm'):
-            PM.attach(self, '_pm')
-
-    def enable_strict_bytes_type_checking(self) -> None:
-        self.codec = ABICodec(build_strict_registry())
+    def enable_unstable_package_management_api(self):
+        from web3.pm import PM
+        PM.attach(self, '_pm')

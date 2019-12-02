@@ -109,22 +109,22 @@ pytest -n 4 -f --maxfail=1
 
 2. Execute `tox` for the tests
 
-There are multiple [components](https://github.com/ethereum/web3.py/blob/master/.circleci/config.yml#L144) of the tests. You can run test to against specific component. For example:
+There are multiple [components](https://github.com/ethereum/web3.py/blob/master/.travis.yml#L53) of the tests. You can run test to against specific component. For example:
 
 ```sh
+# Run Tests for the Core component (for Python 3.5):
+tox -e py35-core
+
 # Run Tests for the Core component (for Python 3.6):
 tox -e py36-core
-
-# Run Tests for the Core component (for Python 3.7):
-tox -e py37-core
 ```
 
 If for some reason it is not working, add `--recreate` params.
 
-`tox` is good for testing against the full set of build targets. But if you want to run the tests individually, `pytest` is better for development workflow. For example, to run only the tests in one file:
+`tox` is good for testing against the full set of build targets. But if you want to run the tests individually, `py.test` is better for development workflow. For example, to run only the tests in one file:
 
 ```sh
-pytest tests/core/gas-strategies/test_time_based_gas_price_strategy.py
+py.test tests/core/gas-strategies/test_time_based_gas_price_strategy.py
 ```
 
 ### Release setup
@@ -138,12 +138,6 @@ To release a new version:
 
 ```sh
 make release bump=$$VERSION_PART_TO_BUMP$$
-```
-
-To preview the upcoming release notes:
-
-```sh
-towncrier --draft
 ```
 
 #### How to bumpversion

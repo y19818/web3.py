@@ -87,9 +87,8 @@ exclude_patterns = [
     'web3.gas_strategies.rst',
     'web3.middleware.rst',
     'web3.providers.rst',
-    'web3.providers.eth_tester.rst',
+    'web3.providers.vns_tester.rst',
     'web3.testing.rst',
-    'web3.tools.*',
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -283,8 +282,8 @@ texinfo_documents = [
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.5', None),
-    'eth-account': ('http://eth-account.readthedocs.io/en/latest/', None),
-    # does not exist yet: 'eth-tester': ('http://eth-tester.readthedocs.io/en/latest/', None),
+    'vns-account': ('http://eth-account.readthedocs.io/en/latest/', None),
+    # does not exist yet: 'vns-tester': ('http://eth-tester.readthedocs.io/en/latest/', None),
     'hexbytes': ('http://hexbytes.readthedocs.io/en/latest/', None),
 }
 

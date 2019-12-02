@@ -1,71 +1,37 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Coroutine,
-    Union,
-)
-
-from eth_utils.toolz import (
+from vns_utils.toolz import (
     curry,
     pipe,
 )
 
-from web3.method import (
-    Method,
-)
-from web3.types import (
-    RPCResponse,
-)
-
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
-
 
 @curry
-def apply_result_formatters(
-    result_formatters: Callable[..., Any], result: RPCResponse
-) -> RPCResponse:
-    if result_formatters:
-        formatted_result = pipe(result, result_formatters)
-        return formatted_result
-    else:
-        return result
-
-
-@curry
-def retrieve_blocking_method_call_fn(
-    w3: "Web3", module: Union["Module", "ModuleV2"], method: Method
-) -> Callable[..., RPCResponse]:
-    def caller(*args: Any, **kwargs: Any) -> RPCResponse:
-        (method_str, params), response_formatters = method.process_params(module, *args, **kwargs)
-        result_formatters, error_formatters = response_formatters
-        result = w3.manager.request_blocking(method_str, params, error_formatters)
-        return apply_result_formatters(result_formatters, result)
+def retrieve_blocking_method_call_fn(w3, module, method):
+    def caller(*args, **kwargs):
+        (method_str, params), output_formatters = method.process_params(module, *args, **kwargs)
+        return pipe(
+            w3.manager.request_blocking(method_str, params),
+            *output_formatters)
     return caller
 
 
 @curry
-def retrieve_async_method_call_fn(
-    w3: "Web3", module: Union["Module", "ModuleV2"], method: Method
-) -> Callable[..., Coroutine[Any, Any, RPCResponse]]:
-    async def caller(*args: Any, **kwargs: Any) -> RPCResponse:
-        (method_str, params), response_formatters = method.process_params(module, *args, **kwargs)
-        result_formatters, error_formatters = response_formatters
-        result = await w3.manager.coro_request(method_str, params, error_formatters)
-        return apply_result_formatters(result_formatters, result)
+def retrieve_async_method_call_fn(w3, module, method):
+    async def caller(*args, **kwargs):
+        (method_str, params), output_formatters = method.process_params(module, *args, **kwargs)
+        raw_result = await w3.manager.coro_request(method_str, params)
+        return pipe(raw_result, *output_formatters)
     return caller
 
 
 #  TODO: Replace this with ModuleV2 when ready.
 class Module:
-    web3: "Web3" = None
+    web3 = None
 
-    def __init__(self, web3: "Web3") -> None:
+    def __init__(self, web3):
         self.web3 = web3
 
     @classmethod
-    def attach(cls, target: "Web3", module_name: str=None) -> None:
+    def attach(cls, target, module_name=None):
         if not module_name:
             module_name = cls.__name__.lower()
 
@@ -93,7 +59,7 @@ class Module:
 class ModuleV2(Module):
     is_async = False
 
-    def __init__(self, web3: "Web3") -> None:
+    def __init__(self, web3):
         if self.is_async:
             self.retrieve_caller_fn = retrieve_async_method_call_fn(web3, self)
         else:

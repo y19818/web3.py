@@ -1,6 +1,6 @@
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     is_same_address,
 )
 
@@ -14,17 +14,17 @@ pytestmark = pytest.mark.filterwarnings("ignore:implicit cast from 'char *'")
 
 @pytest.fixture()
 def Emitter(web3, EMITTER):
-    return web3.eth.contract(**EMITTER)
+    return web3.vns.contract(**EMITTER)
 
 
 @pytest.fixture()
 def emitter(web3, Emitter, wait_for_transaction, wait_for_block, address_conversion_func):
     wait_for_block(web3)
-    deploy_txn_hash = Emitter.constructor().transact({'from': web3.eth.coinbase, 'gas': 1000000})
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn_hash)
+    deploy_txn_hash = Emitter.constructor().transact({'from': web3.vns.coinbase, 'gas': 1000000})
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn_hash)
     contract_address = address_conversion_func(deploy_receipt['contractAddress'])
 
-    bytecode = web3.eth.getCode(contract_address)
+    bytecode = web3.vns.getCode(contract_address)
     assert bytecode == Emitter.bytecode_runtime
     _emitter = Emitter(address=contract_address)
     assert _emitter.address == contract_address
@@ -95,7 +95,7 @@ def test_event_data_extraction(web3,
     else:
         assert event_topic in log_entry['topics']
 
-    event_data = get_event_data(web3.codec, event_abi, log_entry)
+    event_data = get_event_data(event_abi, log_entry)
 
     assert event_data['args'] == expected_args
     assert event_data['blockHash'] == txn_receipt['blockHash']
@@ -126,7 +126,7 @@ def test_dynamic_length_argument_extraction(web3,
     string_0_topic = web3.keccak(text=string_0)
     assert string_0_topic in log_entry['topics']
 
-    event_data = get_event_data(web3.codec, event_abi, log_entry)
+    event_data = get_event_data(event_abi, log_entry)
 
     expected_args = {
         "arg0": string_0_topic,

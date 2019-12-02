@@ -1,7 +1,7 @@
 from web3._utils.threads import (
     Timeout,
 )
-from web3.providers.eth_tester import (
+from web3.providers.vns_tester import (
     EthereumTesterProvider,
 )
 
@@ -10,9 +10,9 @@ def test_sync_filter_against_latest_blocks(web3, sleep_interval, wait_for_block)
     if not isinstance(web3.provider, EthereumTesterProvider):
         web3.provider = EthereumTesterProvider()
 
-    txn_filter = web3.eth.filter("latest")
+    txn_filter = web3.vns.filter("latest")
 
-    current_block = web3.eth.blockNumber
+    current_block = web3.vns.blockNumber
 
     wait_for_block(web3, current_block + 3)
 
@@ -25,6 +25,6 @@ def test_sync_filter_against_latest_blocks(web3, sleep_interval, wait_for_block)
     assert len(found_block_hashes) == 3
 
     expected_block_hashes = [
-        web3.eth.getBlock(n + 1).hash for n in range(current_block, current_block + 3)
+        web3.vns.getBlock(n + 1).hash for n in range(current_block, current_block + 3)
     ]
     assert found_block_hashes == expected_block_hashes

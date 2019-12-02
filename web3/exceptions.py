@@ -1,10 +1,6 @@
 import datetime
 import time
 
-from web3.types import (
-    BlockData,
-)
-
 
 class BadFunctionCallOutput(Exception):
     """
@@ -49,7 +45,7 @@ class StaleBlockchain(Exception):
     """
     Raised by the stalecheck_middleware when the latest block is too old.
     """
-    def __init__(self, block: BlockData, allowable_delay: int) -> None:
+    def __init__(self, block, allowable_delay):
         last_block_date = datetime.datetime.fromtimestamp(block.timestamp).strftime('%c')
         message = (
             "The latest block, #%d, is %d seconds old, but is only allowed to be %d s old. "
@@ -58,7 +54,7 @@ class StaleBlockchain(Exception):
         )
         super().__init__(message, block, allowable_delay)
 
-    def __str__(self) -> str:
+    def __str__(self):
         return self.args[0]
 
 
@@ -151,21 +147,5 @@ class BlockNotFound(Exception):
 class InfuraKeyNotFound(Exception):
     """
     Raised when there is no Infura Project Id set.
-    """
-    pass
-
-
-class LogTopicError(ValueError):
-    # Inherits from ValueError for backwards compatibility
-    """
-    Raised when the number of log topics is mismatched.
-    """
-    pass
-
-
-class InvalidEventABI(ValueError):
-    # Inherits from ValueError for backwards compatibility
-    """
-    Raised when the event ABI is invalid.
     """
     pass

@@ -16,11 +16,11 @@ Retrieving gas price
 --------------------
 
 To retreive the gas price using the selected strategy simply call
-:meth:`~web3.eth.Eth.generateGasPrice`
+:meth:`~web3.vns.Bbbbbbbb.generateGasPrice`
 
 .. code-block:: python
 
-    >>> Web3.eth.generateGasPrice()
+    >>> Web3.vns.generateGasPrice()
     20000000000
 
 Creating a gas price strategy
@@ -53,7 +53,7 @@ returns a higher gas price when the value of the transaction is higher than
 Selecting the gas price strategy
 --------------------------------
 
-The gas price strategy can be set by calling :meth:`~web3.eth.Eth.setGasPriceStrategy`.
+The gas price strategy can be set by calling :meth:`~web3.vns.Bbbbbbbb.setGasPriceStrategy`.
 
 .. code-block:: python
 
@@ -63,7 +63,7 @@ The gas price strategy can be set by calling :meth:`~web3.eth.Eth.setGasPriceStr
         ...
 
     w3 = Web3(...)
-    w3.eth.setGasPriceStrategy(value_based_gas_price_strategy)
+    w3.vns.setGasPriceStrategy(value_based_gas_price_strategy)
 
 Available gas price strategies
 ------------------------------
@@ -72,8 +72,8 @@ Available gas price strategies
 
 .. py:method:: rpc_gas_price_strategy(web3, transaction_params=None)
 
-    Makes a call to the `JSON-RPC eth_gasPrice
-    method <https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gasprice>`_ which returns
+    Makes a call to the `JSON-RPC vns_gasPrice
+    method <https://github.com/ethereum/wiki/wiki/JSON-RPC#vns_gasprice>`_ which returns
     the gas price configured by the connected Ethereum node.
 
 .. py:module:: web3.gas_strategies.time_based
@@ -110,7 +110,7 @@ Available gas price strategies
         from web3.gas_strategies.time_based import medium_gas_price_strategy
 
         w3 = Web3()
-        w3.eth.setGasPriceStrategy(medium_gas_price_strategy)
+        w3.vns.setGasPriceStrategy(medium_gas_price_strategy)
 
         w3.middleware_onion.add(middleware.time_based_cache_middleware)
         w3.middleware_onion.add(middleware.latest_block_based_cache_middleware)

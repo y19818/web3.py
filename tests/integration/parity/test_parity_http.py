@@ -49,7 +49,6 @@ def parity_command_arguments(
         '--password', passwordfile,
         '--jsonrpc-port', rpc_port,
         '--jsonrpc-apis', 'all',
-        '--jsonrpc-experimental',
         '--no-ipc',
         '--no-ws',
         '--whisper',
@@ -66,7 +65,6 @@ def parity_import_blocks_command(parity_binary, rpc_port, datadir, passwordfile)
         '--password', passwordfile,
         '--jsonrpc-port', str(rpc_port),
         '--jsonrpc-apis', 'all',
-        '--jsonrpc-experimental',
         '--no-ipc',
         '--no-ws',
         '--tracing', 'on',
@@ -76,7 +74,7 @@ def parity_import_blocks_command(parity_binary, rpc_port, datadir, passwordfile)
 @pytest.fixture(scope="module")  # noqa: F811
 def web3(parity_process, endpoint_uri):
     wait_for_http(endpoint_uri)
-    _web3 = Web3(Web3.HTTPProvider(endpoint_uri))
+    _web3 = Web3 (Web3.HTTPProvider(endpoint_uri))
     return _web3
 
 

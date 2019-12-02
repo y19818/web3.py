@@ -7,5 +7,5 @@ from flaky import (
 def test_miner_hashrate(web3_empty, wait_for_miner_start):
     web3 = web3_empty
 
-    hashrate = web3.eth.hashrate
+    hashrate = web3.vns.hashrate
     assert hashrate > 0

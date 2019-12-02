@@ -1,33 +1,31 @@
-from eth_abi.grammar import (
+from vns_abi import (
+    decode_abi,
+    is_encodable,
+)
+from vns_abi.grammar import (
     parse as parse_type_string,
 )
-from eth_utils import (
+from vns_utils import (
     is_list_like,
     is_string,
     is_text,
-)
-from eth_utils.curried import (
-    apply_formatter_if,
-)
-from eth_utils.toolz import (
-    complement,
-    curry,
 )
 from hexbytes import (
     HexBytes,
 )
 
-from web3._utils.events import (
-    EventFilterBuilder,
+from web3._utils.formatters import (
+    apply_formatter_if,
 )
 from web3._utils.threads import (
     TimerClass,
 )
+from web3._utils.toolz import (
+    complement,
+    curry,
+)
 from web3._utils.validation import (
     validate_address,
-)
-from web3.types import (
-    FilterParams,
 )
 
 from .events import (
@@ -37,7 +35,6 @@ from .events import (
 
 
 def construct_event_filter_params(event_abi,
-                                  abi_codec,
                                   contract_address=None,
                                   argument_filters=None,
                                   topics=None,
@@ -45,7 +42,7 @@ def construct_event_filter_params(event_abi,
                                   toBlock=None,
                                   address=None):
     filter_params = {}
-    topic_set = construct_event_topic_set(event_abi, abi_codec, argument_filters)
+    topic_set = construct_event_topic_set(event_abi, argument_filters)
 
     if topics is not None:
         if len(topic_set) > 1:
@@ -87,7 +84,7 @@ def construct_event_filter_params(event_abi,
     if toBlock is not None:
         filter_params['toBlock'] = toBlock
 
-    data_filters_set = construct_event_data_set(event_abi, abi_codec, argument_filters)
+    data_filters_set = construct_event_data_set(event_abi, argument_filters)
 
     return data_filters_set, filter_params
 
@@ -124,11 +121,11 @@ class Filter:
         return filter(self.is_valid_entry, entries)
 
     def get_new_entries(self):
-        log_entries = self._filter_valid_entries(self.web3.eth.getFilterChanges(self.filter_id))
+        log_entries = self._filter_valid_entries(self.web3.vns.getFilterChanges(self.filter_id))
         return self._format_log_entries(log_entries)
 
     def get_all_entries(self):
-        log_entries = self._filter_valid_entries(self.web3.eth.getFilterLogs(self.filter_id))
+        log_entries = self._filter_valid_entries(self.web3.vns.getFilterLogs(self.filter_id))
         return self._format_log_entries(log_entries)
 
     def _format_log_entries(self, log_entries=None):
@@ -153,8 +150,6 @@ class LogFilter(Filter):
     data_filter_set = None
     data_filter_set_regex = None
     log_entry_formatter = None
-    filter_params: FilterParams = None
-    builder: EventFilterBuilder = None
 
     def __init__(self, *args, **kwargs):
         self.log_entry_formatter = kwargs.pop(
@@ -178,7 +173,7 @@ class LogFilter(Filter):
         """
         self.data_filter_set = data_filter_set
         if any(data_filter_set):
-            self.data_filter_set_function = match_fn(self.web3, data_filter_set)
+            self.data_filter_set_function = match_fn(data_filter_set)
 
     def is_valid_entry(self, entry):
         if not self.data_filter_set:
@@ -197,8 +192,8 @@ normalize_to_text = apply_formatter_if(not_text, decode_utf8_bytes)
 def normalize_data_values(type_string, data_value):
     """Decodes utf-8 bytes to strings for abi string values.
 
-    eth-abi v1 returns utf-8 bytes for string values.
-    This can be removed once eth-abi v2 is required.
+    vns-abi v1 returns utf-8 bytes for string values.
+    This can be removed once vns-abi v2 is required.
     """
     _type = parse_type_string(type_string)
     if _type.base == "string":
@@ -210,25 +205,23 @@ def normalize_data_values(type_string, data_value):
 
 
 @curry
-def match_fn(w3, match_values_and_abi, data):
+def match_fn(match_values_and_abi, data):
     """Match function used for filtering non-indexed event arguments.
 
     Values provided through the match_values_and_abi parameter are
     compared to the abi decoded log data.
     """
     abi_types, all_match_values = zip(*match_values_and_abi)
-
-    decoded_values = w3.codec.decode_abi(abi_types, HexBytes(data))
+    decoded_values = decode_abi(abi_types, HexBytes(data))
     for data_value, match_values, abi_type in zip(decoded_values, all_match_values, abi_types):
         if match_values is None:
             continue
         normalized_data = normalize_data_values(abi_type, data_value)
         for value in match_values:
-            if not w3.is_encodable(abi_type, value):
+            if not is_encodable(abi_type, value):
                 raise ValueError(
-                    f"Value {value} is of the wrong abi type. "
-                    f"Expected {abi_type} typed value."
-                )
+                    "Value {0} is of the wrong abi type. "
+                    "Expected {1} typed value.".format(value, abi_type))
             if value == normalized_data:
                 break
         else:

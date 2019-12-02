@@ -20,7 +20,7 @@ def test_sync_filter_against_log_events(web3_empty,
                                         ):
     web3 = web3_empty
 
-    txn_filter = web3.eth.filter({})
+    txn_filter = web3.vns.filter({})
 
     txn_hashes = []
     txn_hashes.append(emitter.functions.logNoArgs(emitter_event_ids.LogNoArguments).transact())
@@ -48,7 +48,7 @@ def test_async_filter_against_log_events(web3_empty,
     web3 = web3_empty
 
     seen_logs = []
-    txn_filter = web3.eth.filter({})
+    txn_filter = web3.vns.filter({})
     txn_filter.watch(seen_logs.append)
 
     txn_hashes = []

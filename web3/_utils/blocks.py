@@ -1,4 +1,4 @@
-from eth_utils import (
+from vns_utils import (
     is_bytes,
     is_hex,
     is_integer,

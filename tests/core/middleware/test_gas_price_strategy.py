@@ -18,14 +18,14 @@ def the_gas_price_strategy_middleware(web3):
 
 
 def test_gas_price_generated(the_gas_price_strategy_middleware):
-    the_gas_price_strategy_middleware.web3.eth.generateGasPrice.return_value = 5
-    method = 'eth_sendTransaction'
+    the_gas_price_strategy_middleware.web3.vns.generateGasPrice.return_value = 5
+    method = 'vns_sendTransaction'
     params = [{
         'to': '0x0',
         'value': 1,
     }]
     the_gas_price_strategy_middleware(method, params)
-    the_gas_price_strategy_middleware.web3.eth.generateGasPrice.assert_called_once_with({
+    the_gas_price_strategy_middleware.web3.vns.generateGasPrice.assert_called_once_with({
         'to': '0x0',
         'value': 1,
     })
@@ -37,8 +37,8 @@ def test_gas_price_generated(the_gas_price_strategy_middleware):
 
 
 def test_gas_price_not_overridden(the_gas_price_strategy_middleware):
-    the_gas_price_strategy_middleware.web3.eth.generateGasPrice.return_value = 5
-    method = 'eth_sendTransaction'
+    the_gas_price_strategy_middleware.web3.vns.generateGasPrice.return_value = 5
+    method = 'vns_sendTransaction'
     params = [{
         'to': '0x0',
         'value': 1,
@@ -53,8 +53,8 @@ def test_gas_price_not_overridden(the_gas_price_strategy_middleware):
 
 
 def test_gas_price_not_set_without_gas_price_strategy(the_gas_price_strategy_middleware):
-    the_gas_price_strategy_middleware.web3.eth.generateGasPrice.return_value = None
-    method = 'eth_sendTransaction'
+    the_gas_price_strategy_middleware.web3.vns.generateGasPrice.return_value = None
+    method = 'vns_sendTransaction'
     params = [{
         'to': '0x0',
         'value': 1,
@@ -65,5 +65,5 @@ def test_gas_price_not_set_without_gas_price_strategy(the_gas_price_strategy_mid
 
 def test_not_generate_gas_price_when_not_send_transaction_rpc(the_gas_price_strategy_middleware):
     the_gas_price_strategy_middleware.web3.getGasPriceStrategy = Mock()
-    the_gas_price_strategy_middleware('eth_getBalance', [])
+    the_gas_price_strategy_middleware('vns_getBalance', [])
     the_gas_price_strategy_middleware.web3.getGasPriceStrategy.assert_not_called()

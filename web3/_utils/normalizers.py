@@ -6,22 +6,19 @@ from distutils.version import (
 import functools
 import json
 
-import eth_abi
-from eth_abi.exceptions import (
+import vns_abi
+from vns_abi.exceptions import (
     ParseError,
 )
-from eth_abi.grammar import (
+from vns_abi.grammar import (
     BasicType,
     parse,
 )
-from eth_utils import (
+from vns_utils import (
     to_checksum_address,
 )
-from eth_utils.address import (
+from vns_utils.address import (
     is_binary_address,
-)
-from eth_utils.toolz import (
-    curry,
 )
 from hexbytes import (
     HexBytes,
@@ -38,6 +35,9 @@ from web3._utils.ens import (
     StaticENS,
     is_ens_name,
     validate_name_has_address,
+)
+from web3._utils.toolz import (
+    curry,
 )
 from web3._utils.validation import (
     validate_abi,
@@ -172,7 +172,7 @@ def abi_ens_resolver(w3, type_str, val):
                 "Could not look up name %r because ENS is"
                 " set to None" % (val)
             )
-        elif int(w3.net.version) != 1 and not isinstance(w3.ens, StaticENS):
+        elif int(w3.net.version) is not 1 and not isinstance(w3.ens, StaticENS):
             raise InvalidAddress(
                 "Could not look up name %r because web3 is"
                 " not connected to mainnet" % (val)
@@ -188,7 +188,7 @@ BASE_RETURN_NORMALIZERS = [
 ]
 
 
-if LooseVersion(eth_abi.__version__) < LooseVersion("2"):
+if LooseVersion(vns_abi.__version__) < LooseVersion("2"):
     BASE_RETURN_NORMALIZERS.append(decode_abi_strings)
 
 

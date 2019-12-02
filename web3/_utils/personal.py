@@ -45,12 +45,6 @@ sign = Method(
 )
 
 
-signTypedData = Method(
-    "personal_signTypedData",
-    mungers=[default_root_munger],
-)
-
-
 ecRecover = Method(
     "personal_ecRecover",
     mungers=[default_root_munger],

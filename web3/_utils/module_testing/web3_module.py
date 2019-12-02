@@ -178,20 +178,20 @@ class Web3ModuleTest:
         (
             (
                 ['address'],
-                ['one.eth'],
+                ['one.vns'],
                 HexBytes("0x2ff37b5607484cd4eecf6d13292e22bd6e5401eaffcc07e279583bc742c68882"),
             ),
             (
                 ['address[]'],
-                [['one.eth', 'two.eth']],
+                [['one.vns', 'two.vns']],
                 HexBytes("0xb98565c0c26a962fd54d93b0ed6fb9296e03e9da29d2281ed3e3473109ef7dde"),
             ),
         ),
     )
     def test_solidityKeccak_ens(self, web3, types, values, expected):
         with ens_addresses(web3, {
-            'one.eth': "0x49EdDD3769c0712032808D86597B84ac5c2F5614",
-            'two.eth': "0xA6b759bBbf4B59D24acf7E06e79f3a5D104fdCE5",
+            'one.vns': "0x49EdDD3769c0712032808D86597B84ac5c2F5614",
+            'two.vns': "0xA6b759bBbf4B59D24acf7E06e79f3a5D104fdCE5",
         }):
             # when called as class method, any name lookup attempt will fail
             with pytest.raises(InvalidAddress):

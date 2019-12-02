@@ -1,6 +1,6 @@
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     is_address,
 )
 
@@ -159,7 +159,7 @@ def test_on_sync_filter_with_event_name_and_non_indexed_argument(
 
 
 def test_filter_with_contract_address(web3, emitter, emitter_event_ids, wait_for_transaction):
-    event_filter = web3.eth.filter(filter_params={'address': emitter.address})
+    event_filter = web3.vns.filter(filter_params={'address': emitter.address})
     txn_hash = emitter.functions.logNoArgs(emitter_event_ids.LogNoArguments).transact()
     wait_for_transaction(web3, txn_hash)
     seen_logs = event_filter.get_new_entries()

@@ -9,5 +9,5 @@ from web3.contract import (
 #  getBlock() does not allow negative block identifiers. Support for negative block identifier
 #  will likely be removed in v5.
 def test_parse_block_identifier_int(web3):
-    last_num = web3.eth.getBlock('latest').number
+    last_num = web3.vns.getBlock('latest').number
     assert 0 == parse_block_identifier_int(web3, -1 - last_num)

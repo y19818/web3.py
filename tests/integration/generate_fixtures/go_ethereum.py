@@ -5,12 +5,9 @@ import pprint
 import shutil
 import sys
 
-from eth_utils import (
+from vns_utils import (
     is_dict,
     is_same_address,
-)
-from eth_utils.toolz import (
-    merge,
 )
 
 import common
@@ -26,6 +23,9 @@ from web3._utils.module_testing.emitter_contract import (
 from web3._utils.module_testing.math_contract import (
     MATH_ABI,
     MATH_BYTECODE,
+)
+from web3._utils.toolz import (
+    merge,
 )
 
 # this script is used for generating the parity fixture
@@ -61,7 +61,7 @@ def generate_go_ethereum_fixture(destination_dir):
         ))
 
         common.wait_for_socket(geth_ipc_path)
-        web3 = Web3(Web3.IPCProvider(geth_ipc_path))
+        web3 = Web3 (Web3.IPCProvider(geth_ipc_path))
         chain_data = setup_chain_state(web3)
         static_data = {
             'raw_txn_account': common.RAW_TXN_ACCOUNT,
@@ -73,14 +73,14 @@ def generate_go_ethereum_fixture(destination_dir):
 
 
 def setup_chain_state(web3):
-    coinbase = web3.eth.coinbase
+    coinbase = web3.vns.coinbase
 
     assert is_same_address(coinbase, common.COINBASE)
 
     #
     # Math Contract
     #
-    math_contract_factory = web3.eth.contract(
+    math_contract_factory = web3.vns.contract(
         abi=MATH_ABI,
         bytecode=MATH_BYTECODE,
     )
@@ -90,7 +90,7 @@ def setup_chain_state(web3):
     #
     # Emitter Contract
     #
-    emitter_contract_factory = web3.eth.contract(
+    emitter_contract_factory = web3.vns.contract(
         abi=EMITTER_ABI,
         bytecode=EMITTER_BYTECODE,
     )
@@ -100,11 +100,11 @@ def setup_chain_state(web3):
     txn_hash_with_log = emitter_contract.functions.logDouble(
         which=EMITTER_ENUM['LogDoubleWithIndex'], arg0=12345, arg1=54321,
     ).transact({
-        'from': web3.eth.coinbase,
+        'from': web3.vns.coinbase,
     })
     print('TXN_HASH_WITH_LOG:', txn_hash_with_log)
     txn_receipt_with_log = common.mine_transaction_hash(web3, txn_hash_with_log)
-    block_with_log = web3.eth.getBlock(txn_receipt_with_log['blockHash'])
+    block_with_log = web3.vns.getBlock(txn_receipt_with_log['blockHash'])
     print('BLOCK_HASH_WITH_LOG:', block_with_log['hash'])
 
     #
@@ -112,7 +112,7 @@ def setup_chain_state(web3):
     #
     empty_block_number = common.mine_block(web3)
     print('MINED_EMPTY_BLOCK')
-    empty_block = web3.eth.getBlock(empty_block_number)
+    empty_block = web3.vns.getBlock(empty_block_number)
     assert is_dict(empty_block)
     assert not empty_block['transactions']
     print('EMPTY_BLOCK_HASH:', empty_block['hash'])
@@ -122,16 +122,16 @@ def setup_chain_state(web3):
     #
     web3.geth.personal.unlockAccount(coinbase, common.KEYFILE_PW)
     web3.geth.miner.start(1)
-    mined_txn_hash = web3.eth.sendTransaction({
+    mined_txn_hash = web3.vns.sendTransaction({
         'from': coinbase,
         'to': coinbase,
         'value': 1,
         'gas': 21000,
-        'gas_price': web3.eth.gasPrice,
+        'gas_price': web3.vns.gasPrice,
     })
     mined_txn_receipt = common.mine_transaction_hash(web3, mined_txn_hash)
     print('MINED_TXN_HASH:', mined_txn_hash)
-    block_with_txn = web3.eth.getBlock(mined_txn_receipt['blockHash'])
+    block_with_txn = web3.vns.getBlock(mined_txn_receipt['blockHash'])
     print('BLOCK_WITH_TXN_HASH:', block_with_txn['hash'])
 
     geth_fixture = {

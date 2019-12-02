@@ -9,5 +9,5 @@ def skip_testrpc_and_wait_for_mining_start(web3,
 
     wait_for_miner_start(web3)
 
-    assert web3.eth.mining
-    assert web3.eth.hashrate
+    assert web3.vns.mining
+    assert web3.vns.hashrate

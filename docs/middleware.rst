@@ -28,17 +28,17 @@ AttributeDict
 .. py:method:: web3.middleware.attrdict_middleware
 
     This middleware converts the output of a function from a dictionary to an ``AttributeDict``
-    which enables dot-syntax access, like ``eth.getBlock('latest').number``
-    in addition to ``eth.getBlock('latest')['number']``.
+    which enables dot-syntax access, like ``vns.getBlock('latest').number``
+    in addition to ``vns.getBlock('latest')['number']``.
 
-.eth Name Resolution
+.vns Name Resolution
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. py:method:: web3.middleware.name_to_address_middleware
 
     This middleware converts Ethereum Name Service (ENS) names into the
-    address that the name points to. For example :meth:`~web3.Eth.sendTransaction` will
-    accept .eth names in the 'from' and 'to' fields.
+    address that the name points to. For example :meth:`~web3.vns.sendTransaction` will
+    accept .vns names in the 'from' and 'to' fields.
 
 .. note::
     This middleware only converts ENS names if invoked with the mainnet
@@ -52,7 +52,7 @@ Pythonic
 
     This converts arguments and returned values to python primitives,
     where appropriate. For example, it converts the raw hex string returned by the RPC call
-    ``eth_blockNumber`` into an ``int``.
+    ``vns_blockNumber`` into an ``int``.
 
 Gas Price Strategy
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +71,7 @@ HTTPRequestRetry
     requests that return the following errors: `ConnectionError`, `HTTPError`, `Timeout`,
     `TooManyRedirects`. Additionally there is a whitelist that only allows certain
     methods to be retried in order to not resend transactions, excluded methods are:
-    `eth_sendTransaction`, `personal_signAndSendTransaction`, `personal_sendTransaction`.
+    `vns_sendTransaction`, `personal_signAndSendTransaction`, `personal_sendTransaction`.
 
 .. _Modifying_Middleware:
 
@@ -270,7 +270,7 @@ Stalecheck
 
     If the latest block in the blockchain is older than 2 days in this example, then the
     middleware will raise a ``StaleBlockchain`` exception on every call except
-    ``web3.eth.getBlock()``.
+    ``web3.vns.getBlock()``.
 
 
 Cache
@@ -335,7 +335,7 @@ The easiest way to connect to a default ``geth --dev`` instance which loads the 
     >>> from web3.auto.gethdev import w3
 
     # confirm that the connection succeeded
-    >>> w3.clientVersion
+    >>> w3.version.node
     'Geth/v1.7.3-stable-4bb3c89d/linux-amd64/go1.9'
 
 This example connects to a local ``geth --dev`` instance on Linux with a
@@ -355,7 +355,7 @@ unique IPC location and loads the middleware:
     >>> w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     # confirm that the connection succeeded
-    >>> w3.clientVersion
+    >>> w3.version.node
     'Geth/v1.7.3-stable-4bb3c89d/linux-amd64/go1.9'
 
 Why is ``geth_poa_middleware`` necessary?
@@ -376,19 +376,17 @@ Locally Managed Log and Block Filters
 
 This middleware provides an alternative to ethereum node managed filters. When used, Log and
 Block filter logic are handled locally while using the same web3 filter api. Filter results are
-retrieved using JSON-RPC endpoints that don't rely on server state.
-
-.. doctest::
-
-    >>> from web3 import Web3, EthereumTesterProvider
-    >>> w3 = Web3(EthereumTesterProvider())
-    >>> from web3.middleware import local_filter_middleware
-    >>> w3.middleware_onion.add(local_filter_middleware)
+retrieved using JSON-RPC endpoints that don't rely on server state. 
 
 .. code-block:: python
 
+    >>> from web3 import Web3, EthereumTesterProvider
+    >>> w3 = Web3(EthereumTesterProvider)
+    >>> from web3.middleware import local_filter_middleware
+    >>> w3.middleware_onion.add(local_filter_middleware())
+
     #  Normal block and log filter apis behave as before.
-    >>> block_filter = w3.eth.filter("latest")
+    >>> block_filter = w3.vns.filter("latest")
 
     >>> log_filter = myContract.events.myEvent.build_filter().deploy()
 
@@ -397,14 +395,14 @@ Signing
 
 .. py:method:: web3.middleware.construct_sign_and_send_raw_middleware(private_key_or_account)
 
-This middleware automatically captures transactions, signs them, and sends them as raw transactions. The from field on the transaction, or ``w3.eth.defaultAccount`` must be set to the address of the private key for this middleware to have any effect.
-
+This middleware automatically captures transactions, signs them, and sends them as raw transactions. The from field on the transaction, or ``w3.vns.defaultAccount`` must be set to the address of the private key for this middleware to have any effect.
+ 
    * ``private_key_or_account`` A single private key or a tuple, list or set of private keys.
 
       Keys can be in any of the following formats:
 
-      * An ``eth_account.LocalAccount`` object
-      * An ``eth_keys.PrivateKey`` object
+      * An ``vns_account.LocalAccount`` object
+      * An ``vns_keys.PrivateKey`` object
       * A raw private key as a hex string or byte string
 
 .. code-block:: python
@@ -412,8 +410,8 @@ This middleware automatically captures transactions, signs them, and sends them 
    >>> from web3 import Web3, EthereumTesterProvider
    >>> w3 = Web3(EthereumTesterProvider)
    >>> from web3.middleware import construct_sign_and_send_raw_middleware
-   >>> from eth_account import Account
+   >>> from vns_account import Account
    >>> acct = Account.create('KEYSMASH FJAFJKLDSKF7JKFDJ 1530')
    >>> w3.middleware_onion.add(construct_sign_and_send_raw_middleware(acct))
-   >>> w3.eth.defaultAccount = acct.address
+   >>> w3.vns.defaultAccount = acct.address
    # Now you can send a tx from acct.address without having to build and sign each raw transaction

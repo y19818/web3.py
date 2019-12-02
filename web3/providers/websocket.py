@@ -5,17 +5,7 @@ import os
 from threading import (
     Thread,
 )
-from types import (
-    TracebackType,
-)
-from typing import (
-    Any,
-    Type,
-)
 
-from eth_typing import (
-    URI,
-)
 import websockets
 
 from web3.exceptions import (
@@ -24,52 +14,44 @@ from web3.exceptions import (
 from web3.providers.base import (
     JSONBaseProvider,
 )
-from web3.types import (
-    RPCEndpoint,
-    RPCResponse,
-)
 
 RESTRICTED_WEBSOCKET_KWARGS = {'uri', 'loop'}
 DEFAULT_WEBSOCKET_TIMEOUT = 10
 
 
-def _start_event_loop(loop: asyncio.AbstractEventLoop) -> None:
+def _start_event_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
     loop.close()
 
 
-def _get_threaded_loop() -> asyncio.AbstractEventLoop:
+def _get_threaded_loop():
     new_loop = asyncio.new_event_loop()
     thread_loop = Thread(target=_start_event_loop, args=(new_loop,), daemon=True)
     thread_loop.start()
     return new_loop
 
 
-def get_default_endpoint() -> URI:
-    return URI(os.environ.get('WEB3_WS_PROVIDER_URI', 'ws://127.0.0.1:8546'))
+def get_default_endpoint():
+    return os.environ.get('WEB3_WS_PROVIDER_URI', 'ws://127.0.0.1:8546')
 
 
 class PersistentWebSocket:
 
-    def __init__(
-        self, endpoint_uri: URI, loop: asyncio.AbstractEventLoop, websocket_kwargs: Any
-    ) -> None:
-        self.ws: websockets.WebSocketClientProtocol = None
+    def __init__(self, endpoint_uri, loop, websocket_kwargs):
+        self.ws = None
         self.endpoint_uri = endpoint_uri
         self.loop = loop
         self.websocket_kwargs = websocket_kwargs
 
-    async def __aenter__(self) -> websockets.WebSocketClientProtocol:
+    async def __aenter__(self):
         if self.ws is None:
             self.ws = await websockets.connect(
                 uri=self.endpoint_uri, loop=self.loop, **self.websocket_kwargs
             )
         return self.ws
 
-    async def __aexit__(
-        self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: TracebackType
-    ) -> None:
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_val is not None:
             try:
                 await self.ws.close()
@@ -84,10 +66,10 @@ class WebsocketProvider(JSONBaseProvider):
 
     def __init__(
             self,
-            endpoint_uri: URI=None,
-            websocket_kwargs: Any=None,
-            websocket_timeout: int=DEFAULT_WEBSOCKET_TIMEOUT,
-    ) -> None:
+            endpoint_uri=None,
+            websocket_kwargs=None,
+            websocket_timeout=DEFAULT_WEBSOCKET_TIMEOUT
+    ):
         self.endpoint_uri = endpoint_uri
         self.websocket_timeout = websocket_timeout
         if self.endpoint_uri is None:
@@ -110,10 +92,10 @@ class WebsocketProvider(JSONBaseProvider):
         )
         super().__init__()
 
-    def __str__(self) -> str:
+    def __str__(self):
         return "WS connection {0}".format(self.endpoint_uri)
 
-    async def coro_make_request(self, request_data: bytes) -> RPCResponse:
+    async def coro_make_request(self, request_data):
         async with self.conn as conn:
             await asyncio.wait_for(
                 conn.send(request_data),
@@ -126,7 +108,7 @@ class WebsocketProvider(JSONBaseProvider):
                 )
             )
 
-    def make_request(self, method: RPCEndpoint, params: Any) -> RPCResponse:
+    def make_request(self, method, params):
         self.logger.debug("Making request WebSocket. URI: %s, "
                           "Method: %s", self.endpoint_uri, method)
         request_data = self.encode_rpc_request(method, params)

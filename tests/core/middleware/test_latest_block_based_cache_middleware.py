@@ -4,7 +4,7 @@ import pytest
 import time
 import uuid
 
-from eth_utils import (
+from vns_utils import (
     is_integer,
     to_tuple,
 )
@@ -105,8 +105,8 @@ def construct_block_data_middleware():
                 return None
 
         return construct_result_generator_middleware({
-            'eth_getBlockByNumber': _get_block_by_number,
-            'eth_getBlockByHash': _get_block_by_hash,
+            'vns_getBlockByNumber': _get_block_by_number,
+            'vns_getBlockByHash': _get_block_by_hash,
             'evm_mine': _evm_mine,
         })
     return _construct_block_data_middleware
@@ -154,7 +154,7 @@ def test_latest_block_based_cache_middleware_pulls_from_cache(
     w3.middleware_onion.add(block_data_middleware)
     w3.middleware_onion.add(result_generator_middleware)
 
-    current_block_hash = w3.eth.getBlock('latest')['hash']
+    current_block_hash = w3.vns.getBlock('latest')['hash']
 
     def cache_class():
         return {

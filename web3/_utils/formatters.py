@@ -3,24 +3,21 @@ from collections.abc import (
     Mapping,
 )
 
-from eth_utils import (
+from vns_utils import (
     is_dict,
     is_list_like,
     is_string,
     to_dict,
     to_list,
 )
-from eth_utils.curried import (
-    apply_formatter_at_index,
-)
-from eth_utils.toolz import (
-    compose,
-    curry,
-    dissoc,
-)
 
 from web3._utils.decorators import (
     reject_recursive_repeats,
+)
+from web3._utils.toolz import (
+    compose,
+    curry,
+    dissoc,
 )
 
 
@@ -29,6 +26,21 @@ def hex_to_integer(value):
 
 
 integer_to_hex = hex
+
+
+@curry
+@to_list
+def apply_formatter_at_index(formatter, at_index, value):
+    if at_index + 1 > len(value):
+        raise IndexError(
+            "Not enough values in iterable to apply formatter.  Got: {0}. "
+            "Need: {1}".format(len(value), at_index + 1)
+        )
+    for index, item in enumerate(value):
+        if index == at_index:
+            yield formatter(item)
+        else:
+            yield item
 
 
 def apply_formatters_to_args(*formatters):
@@ -40,10 +52,40 @@ def apply_formatters_to_args(*formatters):
 
 
 @curry
+def apply_formatter_if(condition, formatter, value):
+    if condition(value):
+        return formatter(value)
+    else:
+        return value
+
+
+@curry
+@to_dict
+def apply_formatters_to_dict(formatters, value):
+    for key, item in value.items():
+        if key in formatters:
+            try:
+                yield key, formatters[key](item)
+            except (TypeError, ValueError) as exc:
+                raise type(exc)("Could not format value %r as field %r" % (item, key)) from exc
+        else:
+            yield key, item
+
+
+@curry
 @to_list
 def apply_formatter_to_array(formatter, value):
     for item in value:
         yield formatter(item)
+
+
+@curry
+def apply_one_of_formatters(formatter_condition_pairs, value):
+    for formatter, condition in formatter_condition_pairs:
+        if condition(value):
+            return formatter(value)
+    else:
+        raise ValueError("The provided value did not satisfy any of the formatter conditions")
 
 
 def map_collection(func, collection):

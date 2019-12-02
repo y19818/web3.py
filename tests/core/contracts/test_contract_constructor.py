@@ -1,6 +1,6 @@
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     decode_hex,
 )
 
@@ -19,7 +19,7 @@ def test_contract_constructor_gas_estimate_no_constructor(web3, MathContract):
     gas_estimate = MathContract.constructor().estimateGas()
 
     deploy_txn = MathContract.constructor().transact()
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     gas_used = txn_receipt.get('gasUsed')
 
     assert abs(gas_estimate - gas_used) < 21000
@@ -31,7 +31,7 @@ def test_contract_constructor_gas_estimate_with_constructor_without_arguments(
     gas_estimate = SimpleConstructorContract.constructor().estimateGas()
 
     deploy_txn = SimpleConstructorContract.constructor().transact()
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     gas_used = txn_receipt.get('gasUsed')
 
     assert abs(gas_estimate - gas_used) < 21000
@@ -56,7 +56,7 @@ def test_contract_constructor_gas_estimate_with_constructor_with_arguments(
 
     deploy_txn = WithConstructorArgumentsContract.constructor(
         *constructor_args, **constructor_kwargs).transact()
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     gas_used = txn_receipt.get('gasUsed')
 
     assert abs(gas_estimate - gas_used) < 21000
@@ -71,7 +71,7 @@ def test_contract_constructor_gas_estimate_with_constructor_with_address_argumen
 
     deploy_txn = WithConstructorAddressArgumentsContract.constructor(
         address_conversion_func("0x16D9983245De15E7A9A73bC586E01FF6E08dE737")).transact()
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     gas_used = txn_receipt.get('gasUsed')
 
     assert abs(gas_estimate - gas_used) < 21000
@@ -84,13 +84,13 @@ def test_contract_constructor_transact_no_constructor(
         address_conversion_func):
     deploy_txn = MathContract.constructor().transact()
 
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert txn_receipt is not None
 
     assert txn_receipt['contractAddress']
     contract_address = address_conversion_func(txn_receipt['contractAddress'])
 
-    blockchain_code = web3.eth.getCode(contract_address)
+    blockchain_code = web3.vns.getCode(contract_address)
     assert blockchain_code == decode_hex(MATH_RUNTIME)
 
 
@@ -101,13 +101,13 @@ def test_contract_constructor_transact_with_constructor_without_arguments(
         address_conversion_func):
     deploy_txn = SimpleConstructorContract.constructor().transact()
 
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert txn_receipt is not None
 
     assert txn_receipt['contractAddress']
     contract_address = address_conversion_func(txn_receipt['contractAddress'])
 
-    blockchain_code = web3.eth.getCode(contract_address)
+    blockchain_code = web3.vns.getCode(contract_address)
     assert blockchain_code == decode_hex(SIMPLE_CONSTRUCTOR_RUNTIME)
 
 
@@ -132,13 +132,13 @@ def test_contract_constructor_transact_with_constructor_with_arguments(
     deploy_txn = WithConstructorArgumentsContract.constructor(
         *constructor_args, **constructor_kwargs).transact()
 
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert txn_receipt is not None
 
     assert txn_receipt['contractAddress']
     contract_address = address_conversion_func(txn_receipt['contractAddress'])
 
-    blockchain_code = web3.eth.getCode(contract_address)
+    blockchain_code = web3.vns.getCode(contract_address)
     assert blockchain_code == decode_hex(WITH_CONSTRUCTOR_ARGUMENTS_RUNTIME)
     assert expected_a == WithConstructorArgumentsContract(
         address=contract_address).functions.data_a().call()
@@ -152,11 +152,11 @@ def test_contract_constructor_transact_with_constructor_with_address_arguments(
         WITH_CONSTRUCTOR_ADDRESS_RUNTIME,
         address_conversion_func):
     deploy_txn = WithConstructorAddressArgumentsContract.constructor(TEST_ADDRESS).transact()
-    txn_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    txn_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert txn_receipt is not None
     assert txn_receipt['contractAddress']
     contract_address = address_conversion_func(txn_receipt['contractAddress'])
-    blockchain_code = web3.eth.getCode(contract_address)
+    blockchain_code = web3.vns.getCode(contract_address)
     assert blockchain_code == decode_hex(WITH_CONSTRUCTOR_ADDRESS_RUNTIME)
     assert TEST_ADDRESS == WithConstructorAddressArgumentsContract(
         address=contract_address).functions.testAddr().call()
@@ -172,15 +172,15 @@ def test_contract_constructor_build_transaction_no_constructor(
         MathContract,
         address_conversion_func):
     txn_hash = MathContract.constructor().transact(
-        {'from': address_conversion_func(web3.eth.accounts[0])}
+        {'from': address_conversion_func(web3.vns.accounts[0])}
     )
-    txn = web3.eth.getTransaction(txn_hash)
-    nonce = web3.eth.getTransactionCount(web3.eth.coinbase)
+    txn = web3.vns.getTransaction(txn_hash)
+    nonce = web3.vns.getTransactionCount(web3.vns.coinbase)
     unsent_txn = MathContract.constructor().buildTransaction({'nonce': nonce})
     assert txn['data'] == unsent_txn['data']
 
-    new_txn_hash = web3.eth.sendTransaction(unsent_txn)
-    new_txn = web3.eth.getTransaction(new_txn_hash)
+    new_txn_hash = web3.vns.sendTransaction(unsent_txn)
+    new_txn = web3.vns.getTransaction(new_txn_hash)
     assert new_txn['data'] == unsent_txn['data']
     assert new_txn['nonce'] == nonce
 
@@ -190,15 +190,15 @@ def test_contract_constructor_build_transaction_with_constructor_without_argumen
         MathContract,
         address_conversion_func):
     txn_hash = MathContract.constructor().transact(
-        {'from': address_conversion_func(web3.eth.accounts[0])}
+        {'from': address_conversion_func(web3.vns.accounts[0])}
     )
-    txn = web3.eth.getTransaction(txn_hash)
-    nonce = web3.eth.getTransactionCount(web3.eth.coinbase)
+    txn = web3.vns.getTransaction(txn_hash)
+    nonce = web3.vns.getTransactionCount(web3.vns.coinbase)
     unsent_txn = MathContract.constructor().buildTransaction({'nonce': nonce})
     assert txn['data'] == unsent_txn['data']
 
-    new_txn_hash = web3.eth.sendTransaction(unsent_txn)
-    new_txn = web3.eth.getTransaction(new_txn_hash)
+    new_txn_hash = web3.vns.sendTransaction(unsent_txn)
+    new_txn = web3.vns.getTransaction(new_txn_hash)
     assert new_txn['data'] == unsent_txn['data']
     assert new_txn['nonce'] == nonce
 
@@ -220,15 +220,15 @@ def test_contract_constructor_build_transaction_with_constructor_with_argument(
         address_conversion_func):
     txn_hash = WithConstructorArgumentsContract.constructor(
         *constructor_args, **constructor_kwargs).transact(
-        {'from': address_conversion_func(web3.eth.accounts[0])}
+        {'from': address_conversion_func(web3.vns.accounts[0])}
     )
-    txn = web3.eth.getTransaction(txn_hash)
-    nonce = web3.eth.getTransactionCount(web3.eth.coinbase)
+    txn = web3.vns.getTransaction(txn_hash)
+    nonce = web3.vns.getTransactionCount(web3.vns.coinbase)
     unsent_txn = WithConstructorArgumentsContract.constructor(
         *constructor_args, **constructor_kwargs).buildTransaction({'nonce': nonce})
     assert txn['data'] == unsent_txn['data']
 
-    new_txn_hash = web3.eth.sendTransaction(unsent_txn)
-    new_txn = web3.eth.getTransaction(new_txn_hash)
+    new_txn_hash = web3.vns.sendTransaction(unsent_txn)
+    new_txn = web3.vns.getTransaction(new_txn_hash)
     assert new_txn['data'] == unsent_txn['data']
     assert new_txn['nonce'] == nonce

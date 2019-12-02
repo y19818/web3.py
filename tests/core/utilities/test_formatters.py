@@ -1,11 +1,8 @@
 
 import pytest
 
-from eth_utils.curried import (
-    apply_formatters_to_dict,
-)
-
 from web3._utils.formatters import (
+    apply_formatters_to_dict,
     map_collection,
     recursive_map,
 )

@@ -1,25 +1,9 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Type,
-)
-
 from requests.exceptions import (
     ConnectionError,
     HTTPError,
     Timeout,
     TooManyRedirects,
 )
-
-from web3.types import (
-    RPCEndpoint,
-    RPCResponse,
-)
-
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
 
 whitelist = [
     'admin',
@@ -29,55 +13,52 @@ whitelist = [
     'txpool'
     'testing',
     'evm',
-    'eth_protocolVersion',
-    'eth_syncing',
-    'eth_coinbase',
-    'eth_mining',
-    'eth_hashrate',
-    'eth_gasPrice',
-    'eth_accounts',
-    'eth_blockNumber',
-    'eth_getBalance',
-    'eth_getStorageAt',
-    'eth_getProof',
-    'eth_getCode',
-    'eth_getBlockByNumber',
-    'eth_getBlockByHash',
-    'eth_getBlockTransactionCountByNumber',
-    'eth_getBlockTransactionCountByHash',
-    'eth_getUncleCountByBlockNumber',
-    'eth_getUncleCountByBlockHash',
-    'eth_getTransactionByHash',
-    'eth_getTransactionByBlockHashAndIndex',
-    'eth_getTransactionByBlockNumberAndIndex',
-    'eth_getTransactionReceipt',
-    'eth_getTransactionCount',
-    'eth_call',
-    'eth_estimateGas',
-    'eth_newBlockFilter',
-    'eth_newPendingTransactionFilter',
-    'eth_newFilter',
-    'eth_getFilterChanges',
-    'eth_getFilterLogs',
-    'eth_getLogs',
-    'eth_uninstallFilter',
-    'eth_getCompilers',
-    'eth_getWork',
-    'eth_sign',
-    'eth_signTypedData',
-    'eth_sendRawTransaction',
+    'vns_protocolVersion',
+    'vns_syncing',
+    'vns_coinbase',
+    'vns_mining',
+    'vns_hashrate',
+    'vns_gasPrice',
+    'vns_accounts',
+    'vns_blockNumber',
+    'vns_getBalance',
+    'vns_getStorageAt',
+    'vns_getCode',
+    'vns_getBlockByNumber',
+    'vns_getBlockByHash',
+    'vns_getBlockTransactionCountByNumber',
+    'vns_getBlockTransactionCountByHash',
+    'vns_getUncleCountByBlockNumber',
+    'vns_getUncleCountByBlockHash',
+    'vns_getTransactionByHash',
+    'vns_getTransactionByBlockHashAndIndex',
+    'vns_getTransactionByBlockNumberAndIndex',
+    'vns_getTransactionReceipt',
+    'vns_getTransactionCount',
+    'vns_call',
+    'vns_estimateGas',
+    'vns_newBlockFilter',
+    'vns_newPendingTransactionFilter',
+    'vns_newFilter',
+    'vns_getFilterChanges',
+    'vns_getFilterLogs',
+    'vns_getLogs',
+    'vns_uninstallFilter',
+    'vns_getCompilers',
+    'vns_getWork',
+    'vns_sign',
+    'vns_sendRawTransaction',
     'personal_importRawKey',
     'personal_newAccount',
     'personal_listAccounts',
     'personal_lockAccount',
     'personal_unlockAccount',
     'personal_ecRecover',
-    'personal_sign',
-    'personal_signTypedData',
+    'personal_sign'
 ]
 
 
-def check_if_retry_on_failure(method: RPCEndpoint) -> bool:
+def check_if_retry_on_failure(method):
     root = method.split('_')[0]
     if root in whitelist:
         return True
@@ -87,36 +68,27 @@ def check_if_retry_on_failure(method: RPCEndpoint) -> bool:
         return False
 
 
-def exception_retry_middleware(
-    make_request: Callable[[RPCEndpoint, Any], Any],
-    web3: "Web3",
-    errors: Collection[Type[BaseException]],
-    retries: int=5,
-) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+def exception_retry_middleware(make_request, web3, errors, retries=5):
     """
     Creates middleware that retries failed HTTP requests. Is a default
     middleware for HTTPProvider.
     """
-    def middleware(method: RPCEndpoint, params: Any) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+    def middleware(method, params):
         if check_if_retry_on_failure(method):
             for i in range(retries):
                 try:
                     return make_request(method, params)
-                # https://github.com/python/mypy/issues/5349
-                except errors:  # type: ignore
+                except errors:
                     if i < retries - 1:
                         continue
                     else:
                         raise
-            return None
         else:
             return make_request(method, params)
     return middleware
 
 
-def http_retry_request_middleware(
-    make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-) -> Callable[[RPCEndpoint, Any], Any]:
+def http_retry_request_middleware(make_request, web3):
     return exception_retry_middleware(
         make_request,
         web3,

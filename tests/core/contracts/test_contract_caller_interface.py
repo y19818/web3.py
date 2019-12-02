@@ -1,9 +1,8 @@
 import pytest
 
-from eth_utils.toolz import (
+from web3._utils.toolz import (
     identity,
 )
-
 from web3.exceptions import (
     MismatchedABI,
     NoABIFound,
@@ -14,18 +13,18 @@ from web3.exceptions import (
 def deploy(web3, Contract, apply_func=identity, args=None):
     args = args or []
     deploy_txn = Contract.constructor(*args).transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     address = apply_func(deploy_receipt['contractAddress'])
     contract = Contract(address=address)
     assert contract.address == address
-    assert len(web3.eth.getCode(contract.address)) > 0
+    assert len(web3.vns.getCode(contract.address)) > 0
     return contract
 
 
 @pytest.fixture()
 def address(web3):
-    return web3.eth.accounts[1]
+    return web3.vns.accounts[1]
 
 
 @pytest.fixture()
@@ -59,25 +58,25 @@ def test_caller_with_parens(math_contract):
 
 
 def test_caller_with_no_abi(web3):
-    contract = web3.eth.contract()
+    contract = web3.vns.contract()
     with pytest.raises(NoABIFound):
         contract.caller.thisFunctionDoesNotExist()
 
 
 def test_caller_with_no_abi_and_parens(web3):
-    contract = web3.eth.contract()
+    contract = web3.vns.contract()
     with pytest.raises(NoABIFound):
         contract.caller().thisFunctionDoesNotExist()
 
 
 def test_caller_with_empty_abi_and_parens(web3):
-    contract = web3.eth.contract(abi=[])
+    contract = web3.vns.contract(abi=[])
     with pytest.raises(NoABIFunctionsFound):
         contract.caller().thisFunctionDoesNotExist()
 
 
 def test_caller_with_empty_abi(web3):
-    contract = web3.eth.contract(abi=[])
+    contract = web3.vns.contract(abi=[])
     with pytest.raises(NoABIFunctionsFound):
         contract.caller.thisFunctionDoesNotExist()
 
@@ -89,7 +88,7 @@ def test_caller_with_a_nonexistent_function(math_contract):
 
 
 def test_caller_with_block_identifier(web3, math_contract):
-    start_num = web3.eth.getBlock('latest').number
+    start_num = web3.vns.getBlock('latest').number
     assert math_contract.caller.counter() == 0
 
     web3.provider.make_request(method='evm_mine', params=[5])
@@ -107,7 +106,7 @@ def test_caller_with_block_identifier_and_transaction_dict(web3,
                                                            caller_tester_contract,
                                                            transaction_dict,
                                                            address):
-    start_num = web3.eth.getBlock('latest').number
+    start_num = web3.vns.getBlock('latest').number
     assert caller_tester_contract.caller.counter() == 0
 
     web3.provider.make_request(method='evm_mine', params=[5])

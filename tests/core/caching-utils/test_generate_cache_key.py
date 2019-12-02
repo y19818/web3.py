@@ -1,6 +1,6 @@
 import random
 
-from eth_utils import (
+from vns_utils import (
     to_dict,
 )
 from hypothesis import (

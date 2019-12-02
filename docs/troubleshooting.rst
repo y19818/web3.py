@@ -48,7 +48,7 @@ the local private key tools in Web3.py to sign and send transactions.
 
 See `how to export your private key
 <https://ethereum.stackexchange.com/questions/33053/what-is-a-private-key-in-an-ethereum-wallet-like-metamask-and-how-do-i-find-it>`_
-and :ref:`eth-account`.
+and :ref:`vns-account`.
 
 .. _faucets:
 

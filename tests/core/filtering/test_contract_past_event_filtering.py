@@ -1,6 +1,6 @@
 import pytest
 
-from eth_utils import (
+from vns_utils import (
     is_same_address,
 )
 

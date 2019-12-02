@@ -9,15 +9,15 @@ Looking up blocks
 -----------------
 
 Blocks can be looked up by either their number or hash using the
-``web3.eth.getBlock`` API.  Block hashes should be in their hexadecimal
+``web3.vns.getBlock`` API.  Block hashes should be in their hexadecimal
 representation.  Block numbers
 
 .. code-block:: python
 
     # get a block by number
-    >>> web3.eth.getBlock(12345)
+    >>> web3.vns.getBlock(12345)
     {
-        'author': '0xad5C1768e5974C231b2148169da064e61910f31a',
+        'author': '0xad5c1768e5974c231b2148169da064e61910f31a',
         'difficulty': 735512610763,
         'extraData': '0x476574682f76312e302e302f6c696e75782f676f312e342e32',
         'gasLimit': 5000,
@@ -42,7 +42,7 @@ representation.  Block numbers
         'uncles': [],
     }
     # get a block by it's hash
-    >>> web3.eth.getBlock('0x767c2bfb3bdee3f78676c1285cd757bcd5d8c272cef2eb30d9733800a78c0b6d')
+    >>> web3.vns.getBlock('0x767c2bfb3bdee3f78676c1285cd757bcd5d8c272cef2eb30d9733800a78c0b6d')
     {...}
 
 
@@ -50,20 +50,20 @@ Getting the latest block
 ------------------------
 
 You can also retrieve the latest block using the string ``'latest'`` in the
-``web3.eth.getBlock`` API.
+``web3.vns.getBlock`` API.
 
 .. code-block:: python
 
-    >>> web3.eth.getBlock('latest')
+    >>> web3.vns.getBlock('latest')
     {...}
 
 
 If you want to know the latest block number you can use the
-``web3.eth.blockNumber`` property.
+``web3.vns.blockNumber`` property.
 
 .. code-block:: python
 
-    >>> web3.eth.blockNumber
+    >>> web3.vns.blockNumber
     4194803
 
 
@@ -136,17 +136,17 @@ Web3 can help you convert between denominations.  The following denominations ar
 Looking up transactions
 -----------------------
 
-You can look up transactions using the ``web3.eth.getTransaction`` function.
+You can look up transactions using the ``web3.vns.getTransaction`` function.
 
 .. code-block:: python
 
-    >>> web3.eth.getTransaction('0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060')
+    >>> web3.vns.getTransaction('0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060')
     {
         'blockHash': '0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd',
         'blockNumber': 46147,
         'condition': None,
         'creates': None,
-        'from': '0xA1E4380A3B1f749673E270229993eE55F35663b4',
+        'from': '0xa1e4380a3b1f749673e270229993ee55f35663b4',
         'gas': 21000,
         'gasPrice': 50000000000000,
         'hash': '0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060',
@@ -158,7 +158,7 @@ You can look up transactions using the ``web3.eth.getTransaction`` function.
         'raw': '0xf86780862d79883d2000825208945df9b87991262f6ba471f09758cde1c0fc1de734827a69801ca088ff6cf0fefd94db46111149ae4bfc179e9b94721fffd821d38d16464b3f71d0a045e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33a',
         's': '0x45e0aff800961cfce805daef7016b9b675c137a6a41a548f7b60a3484c06a33a',
         'standardV': '0x1',
-        'to': '0x5DF9B87991262F6BA471F09758CDE1c0FC1De734',
+        'to': '0x5df9b87991262f6ba471f09758cde1c0fc1de734',
         'transactionIndex': 0,
         'v': '0x1c',
         'value': 31337,
@@ -171,12 +171,12 @@ instead return ``None``.
 Looking up receipts
 -------------------
 
-Transaction receipts can be retrieved using the ``web3.eth.getTransactionReceipt`` API.
+Transaction receipts can be retrieved using the ``web3.vns.getTransactionReceipt`` API.
 
 
 .. code-block:: python
 
-    >>> web3.eth.getTransactionReceipt('0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060')
+    >>> web3.vns.getTransactionReceipt('0x5c504ed432cb51138bcf09aa5e8a410dd4a1e204ef84bfed1be16dfba1b22060')
     {
         'blockHash': '0x4e3a3754410177e6937ef1f84bba68ea139e8d1a2258c5f85db9f1cd715a1bdd',
         'blockNumber': 46147,
@@ -230,7 +230,7 @@ The following example demonstrates a few things:
     import time
     import pprint
     
-    from web3.providers.eth_tester import EthereumTesterProvider
+    from web3.providers.vns_tester import EthereumTesterProvider
     from web3 import Web3
     from solc import compile_source
     
@@ -243,11 +243,11 @@ The following example demonstrates a few things:
     
     
     def deploy_contract(w3, contract_interface):
-        tx_hash = w3.eth.contract(
+        tx_hash = w3.vns.contract(
             abi=contract_interface['abi'],
             bytecode=contract_interface['bin']).deploy()
     
-        address = w3.eth.getTransactionReceipt(tx_hash)['contractAddress']
+        address = w3.vns.getTransactionReceipt(tx_hash)['contractAddress']
         return address
     
     
@@ -261,7 +261,7 @@ The following example demonstrates a few things:
     address = deploy_contract(w3, contract_interface)
     print("Deployed {0} to: {1}\n".format(contract_id, address))
     
-    store_var_contract = w3.eth.contract(
+    store_var_contract = w3.vns.contract(
        address=address,
        abi=contract_interface['abi'])
     
@@ -271,7 +271,7 @@ The following example demonstrates a few things:
     if gas_estimate < 100000:
       print("Sending transaction to setVar(255)\n")
       tx_hash = store_var_contract.functions.setVar(255).transact()
-      receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+      receipt = w3.vns.waitForTransactionReceipt(tx_hash)
       print("Transaction receipt mined: \n")
       pprint.pprint(dict(receipt))
       print("Was transaction successful? \n")
@@ -312,19 +312,19 @@ contract which conforms to this standard.
 .. testsetup::
 
     from web3 import Web3
-    w3 = Web3(Web3.EthereumTesterProvider())
+    w3 = Web3 (Web3.EthereumTesterProvider())
     bytecode = '6060604052341561000c57fe5b604051602080610acb833981016040528080519060200190919050505b620f42408114151561003b5760006000fd5b670de0b6b3a76400008102600281905550600254600060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055505b505b610a27806100a46000396000f30060606040523615610097576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806306fdde0314610099578063095ea7b31461013257806318160ddd1461018957806323b872dd146101af578063313ce5671461022557806370a082311461025157806395d89b411461029b578063a9059cbb14610334578063dd62ed3e1461038b575bfe5b34156100a157fe5b6100a96103f4565b60405180806020018281038252838181518152602001915080519060200190808383600083146100f8575b8051825260208311156100f8576020820191506020810190506020830392506100d4565b505050905090810190601f1680156101245780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561013a57fe5b61016f600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803590602001909190505061042e565b604051808215151515815260200191505060405180910390f35b341561019157fe5b610199610521565b6040518082815260200191505060405180910390f35b34156101b757fe5b61020b600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803573ffffffffffffffffffffffffffffffffffffffff16906020019091908035906020019091905050610527565b604051808215151515815260200191505060405180910390f35b341561022d57fe5b610235610791565b604051808260ff1660ff16815260200191505060405180910390f35b341561025957fe5b610285600480803573ffffffffffffffffffffffffffffffffffffffff16906020019091905050610796565b6040518082815260200191505060405180910390f35b34156102a357fe5b6102ab6107e0565b60405180806020018281038252838181518152602001915080519060200190808383600083146102fa575b8051825260208311156102fa576020820191506020810190506020830392506102d6565b505050905090810190601f1680156103265780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b341561033c57fe5b610371600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803590602001909190505061081a565b604051808215151515815260200191505060405180910390f35b341561039357fe5b6103de600480803573ffffffffffffffffffffffffffffffffffffffff1690602001909190803573ffffffffffffffffffffffffffffffffffffffff16906020019091905050610973565b6040518082815260200191505060405180910390f35b604060405190810160405280600981526020017f54657374546f6b656e000000000000000000000000000000000000000000000081525081565b600081600160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925846040518082815260200191505060405180910390a3600190505b92915050565b60025481565b600081600060008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205410806105f1575081600160008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054105b156105fc5760006000fd5b81600060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254019250508190555081600060008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555081600160008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825403925050819055508273ffffffffffffffffffffffffffffffffffffffff168473ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a3600190505b9392505050565b601281565b6000600060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205490505b919050565b604060405190810160405280600481526020017f544553540000000000000000000000000000000000000000000000000000000081525081565b600081600060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205410156108695760006000fd5b81600060003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555081600060008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825401925050819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a3600190505b92915050565b6000600160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205490505b929150505600a165627a7a723058205071371ee2a4a1be3c96e77d939cdc26161a256fdd638efc08bd33dfc65d3b850029'
     ABI = '[{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function","stateMutability":"view"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function","stateMutability":"nonpayable"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function","stateMutability":"view"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function","stateMutability":"nonpayable"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint8"}],"payable":false,"type":"function","stateMutability":"view"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function","stateMutability":"view"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function","stateMutability":"view"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function","stateMutability":"nonpayable"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function","stateMutability":"view"},{"inputs":[{"name":"_totalSupply","type":"uint256"}],"payable":false,"type":"constructor","stateMutability":"nonpayable"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"}]'
-    factory = w3.eth.contract(abi=ABI, bytecode=bytecode)
-    alice, bob = w3.eth.accounts[0], w3.eth.accounts[1]
+    factory = w3.vns.contract(abi=ABI, bytecode=bytecode)
+    alice, bob = w3.vns.accounts[0], w3.vns.accounts[1]
     assert alice == '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf', alice
     assert bob == '0x2B5AD5c4795c026514f8317c7a215E218DcCD6cF', bob
     tx_hash = factory.constructor(1000000).transact({'from': alice})
     assert tx_hash == b'h9\xeb\xdb4\x07\x03y\x92RP`X\xf6\xf7\x9f\xfaT\xed&e\xee*\xc2\rx\xb3\xab\x8c4\xc9\x1f', tx_hash
-    txn_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    txn_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
     assert txn_receipt['contractAddress'] == '0xF2E246BB76DF876Cef8b38ae84130F4F55De395b', txn_receipt['contractAddress']
     contract_address = txn_receipt['contractAddress']
-    contract = w3.eth.contract(contract_address, abi=ABI)
+    contract = w3.vns.contract(contract_address, abi=ABI)
     total_supply = contract.functions.totalSupply().call()
     decimals = 10 ** 18
     assert total_supply == 1000000 * decimals, total_supply
@@ -346,7 +346,7 @@ contract and the ``ERC20`` ABI.
 
 .. doctest::
 
-    >>> contract = w3.eth.contract(contract_address, abi=ABI)
+    >>> contract = w3.vns.contract(contract_address, abi=ABI)
     >>> contract.address
     '0xF2E246BB76DF876Cef8b38ae84130F4F55De395b'
 
@@ -404,7 +404,7 @@ Next we can transfer some tokens from ``alice`` to ``bob`` using the contract's
 .. doctest::
 
     >>> tx_hash = contract.functions.transfer(bob, 100).transact({'from': alice})
-    >>> tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    >>> tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
     >>> contract.functions.balanceOf(alice).call()
     999999999999999999999900
     >>> contract.functions.balanceOf(bob).call()
@@ -423,7 +423,7 @@ spend using the ``allowance`` function.
     >>> contract.functions.allowance(alice, bob).call()
     0
     >>> tx_hash = contract.functions.approve(bob, 200).transact({'from': alice})
-    >>> tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    >>> tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
     >>> contract.functions.allowance(alice, bob).call()
     200
 
@@ -441,7 +441,7 @@ When someone has an allowance they can transfer those tokens using the
     >>> contract.functions.balanceOf(bob).call()
     100
     >>> tx_hash = contract.functions.transferFrom(alice, bob, 75).transact({'from': bob})
-    >>> tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    >>> tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
     >>> contract.functions.allowance(alice, bob).call()
     125
     >>> contract.functions.balanceOf(bob).call()
@@ -455,9 +455,9 @@ Contract Unit Tests in Python
 -----------------------------
 
 Here is an example of how one can use the `pytest`_ framework in python, Web3.py,
-eth-tester, and PyEVM to perform unit tests entirely in python without any
+vns-tester, and PyEVM to perform unit tests entirely in python without any
 additional need for a full featured ethereum node/client. To install needed
-dependencies you can use the pinned extra for eth_tester in web3 and pytest:
+dependencies you can use the pinned extra for vns_tester in web3 and pytest:
 
 .. _pytest: https://docs.pytest.org/en/latest/
 
@@ -471,50 +471,3 @@ like so:
 .. include::  ../tests/core/contracts/test_contract_example.py
     :code: python
     :start-line: 1
-    
-Using Infura Rinkeby Node
--------------------------
-Import your required libraries
-
-.. code-block:: python
-
-    from web3 import Web3, HTTPProvider
-    
-Initialize a web3 instance with an Infura node
-
-.. code-block:: python
-    
-    w3 = Web3(Web3.HTTPProvider("https://rinkeby.infura.io/v3/YOUR_INFURA_KEY"))
-
- 
-Inject the middleware into the middleware onion
-
-.. code-block:: python
-
-    from web3.middleware import geth_poa_middleware
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-    
-Just remember that you have to sign all transactions locally, as infura does not handle any keys from your wallet ( refer to `this`_  )
-
-
-..  _this: https://web3py.readthedocs.io/en/stable/web3.eth.account.html#local-vs-hosted-nodes
-
-.. code-block:: python
-    
-    transaction = contract.functions.function_Name(params).buildTransaction()
-    transaction.update({ 'gas' : appropriate_gas_amount })  
-    transaction.update({ 'nonce' : web3.eth.getTransactionCount('Your_Wallet_Address') })
-    signed_tx = w3.eth.account.signTransaction(transaction, private_key)
-    
-P.S : the two updates are done to the transaction dictionary, since a raw transaction might not contain gas & nonce amounts, so you have to add them manually.
-    
-And finally, send the transaction
-
-.. code-block:: python
-
-    txn_hash = w3.eth.sendRawTransaction(signed_tx.rawTransaction)
-    txn_receipt = w3.eth.waitForTransactionReceipt(txn_hash)
-    
-Tip : afterwards you can use the value stored in ``txn_hash``, in an explorer like `etherscan`_ to view the transaction's details
-
-.. _etherscan: https://rinkeby.etherscan.io

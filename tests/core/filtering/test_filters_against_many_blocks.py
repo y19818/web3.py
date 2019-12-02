@@ -1,7 +1,7 @@
 import pytest
 import random
 
-from eth_utils import (
+from vns_utils import (
     to_tuple,
 )
 
@@ -11,24 +11,24 @@ def deploy_contracts(web3, contract, wait_for_transaction):
     for i in range(25):
         tx_hash = contract.constructor().transact()
         wait_for_transaction(web3, tx_hash)
-        yield web3.eth.getTransactionReceipt(tx_hash)['contractAddress']
+        yield web3.vns.getTransactionReceipt(tx_hash)['contractAddress']
 
 
 def pad_with_transactions(w3):
-    accounts = w3.eth.accounts
+    accounts = w3.vns.accounts
     for tx_count in range(random.randint(0, 10)):
         _from = accounts[random.randint(0, len(accounts) - 1)]
         _to = accounts[random.randint(0, len(accounts) - 1)]
         value = 50 + tx_count
-        w3.eth.sendTransaction({'from': _from, 'to': _to, 'value': value})
+        w3.vns.sendTransaction({'from': _from, 'to': _to, 'value': value})
 
 
 def single_transaction(w3):
-    accounts = w3.eth.accounts
+    accounts = w3.vns.accounts
     _from = accounts[random.randint(0, len(accounts) - 1)]
     _to = accounts[random.randint(0, len(accounts) - 1)]
     value = 50
-    tx_hash = w3.eth.sendTransaction({'from': _from, 'to': _to, 'value': value})
+    tx_hash = w3.vns.sendTransaction({'from': _from, 'to': _to, 'value': value})
     return tx_hash
 
 
@@ -56,7 +56,7 @@ def test_event_filter_new_events(
 
     expected_match_counter = 0
 
-    while web3.eth.blockNumber < 50:
+    while web3.vns.blockNumber < 50:
         is_match = bool(random.randint(0, 1))
         if is_match:
             expected_match_counter += 1
@@ -69,20 +69,20 @@ def test_event_filter_new_events(
     assert len(event_filter.get_new_entries()) == expected_match_counter
 
 
-@pytest.mark.xfail(reason="Suspected eth-tester bug")
+@pytest.mark.xfail(reason="Suspected vns-tester bug")
 def test_block_filter(web3):
-    block_filter = web3.eth.filter("latest")
+    block_filter = web3.vns.filter("latest")
 
-    while web3.eth.blockNumber < 50:
+    while web3.vns.blockNumber < 50:
         pad_with_transactions(web3)
 
-    assert len(block_filter.get_new_entries()) == web3.eth.blockNumber
+    assert len(block_filter.get_new_entries()) == web3.vns.blockNumber
 
 
 def test_transaction_filter_with_mining(
         web3):
 
-    transaction_filter = web3.eth.filter("pending")
+    transaction_filter = web3.vns.filter("pending")
 
     transaction_counter = 0
 
@@ -93,12 +93,12 @@ def test_transaction_filter_with_mining(
     assert len(transaction_filter.get_new_entries()) == transaction_counter
 
 
-@pytest.mark.xfail(reason="Suspected eth-tester bug")
+@pytest.mark.xfail(reason="Suspected vns-tester bug")
 def test_transaction_filter_without_mining(
         web3):
 
     web3.providers[0].ethereum_tester.auto_mine_transactions = False
-    transaction_filter = web3.eth.filter("pending")
+    transaction_filter = web3.vns.filter("pending")
 
     transaction_counter = 0
 
@@ -129,7 +129,7 @@ def test_event_filter_new_events_many_deployed_contracts(
         while True:
             contract_address = deployed_contract_addresses[
                 random.randint(0, len(deployed_contract_addresses) - 1)]
-            yield web3.eth.contract(
+            yield web3.vns.contract(
                 address=contract_address, abi=Emitter.abi).functions.logNoArgs(which=1).transact
 
     non_matching_transact = gen_non_matching_transact()
@@ -143,7 +143,7 @@ def test_event_filter_new_events_many_deployed_contracts(
 
     expected_match_counter = 0
 
-    while web3.eth.blockNumber < 50:
+    while web3.vns.blockNumber < 50:
         is_match = bool(random.randint(0, 1))
         if is_match:
             expected_match_counter += 1

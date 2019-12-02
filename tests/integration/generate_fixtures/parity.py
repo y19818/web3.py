@@ -6,11 +6,8 @@ import shutil
 import sys
 import time
 
-from eth_utils import (
+from vns_utils import (
     to_text,
-)
-from eth_utils.toolz import (
-    merge,
 )
 
 import common
@@ -19,6 +16,9 @@ from tests.utils import (
     get_open_port,
 )
 from web3 import Web3
+from web3._utils.toolz import (
+    merge,
+)
 
 CHAIN_CONFIG = {
     "name": "CrossClient",
@@ -204,9 +204,9 @@ def generate_parity_fixture(destination_dir):
         )
         # set up fixtures
         common.wait_for_socket(geth_ipc_path)
-        web3_geth = Web3(Web3.IPCProvider(geth_ipc_path))
+        web3_geth = Web3 (Web3.IPCProvider(geth_ipc_path))
         chain_data = go_ethereum.setup_chain_state(web3_geth)
-        fixture_block_count = web3_geth.eth.blockNumber
+        fixture_block_count = web3_geth.vns.blockNumber
 
         datadir = stack.enter_context(common.tempdir())
 
@@ -236,7 +236,7 @@ def generate_parity_fixture(destination_dir):
         ))
 
         common.wait_for_socket(parity_ipc_path)
-        web3 = Web3(Web3.IPCProvider(parity_ipc_path))
+        web3 = Web3 (Web3.IPCProvider(parity_ipc_path))
 
         time.sleep(10)
         connect_nodes(web3, web3_geth)
@@ -266,15 +266,15 @@ def generate_parity_fixture(destination_dir):
 def connect_nodes(w3_parity, w3_secondary):
     parity_peers = w3_parity.parity.netPeers()
     parity_enode = w3_parity.parity.enode()
-    secondary_node_info = w3_secondary.geth.admin.node_info()
+    secondary_node_info = w3_secondary.geth.admin.nodeInfo()
     if secondary_node_info['id'] not in (node.get('id', tuple()) for node in parity_peers['peers']):
-        w3_secondary.geth.admin.add_peer(parity_enode)
+        w3_secondary.geth.admin.addPeer(parity_enode)
 
 
 def wait_for_chain_sync(web3, target):
     start_time = time.time()
     while time.time() < start_time + 120:
-        current_block_number = web3.eth.blockNumber
+        current_block_number = web3.vns.blockNumber
         if current_block_number >= target:
             break
         else:

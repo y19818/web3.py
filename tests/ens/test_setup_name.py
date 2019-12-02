@@ -22,42 +22,42 @@ def TEST_ADDRESS(address_conversion_func):
     'name, normalized_name, namehash_hex',
     [
         (
-            'tester.eth',
-            'tester.eth',
+            'tester.vns',
+            'tester.vns',
             '2a7ac1c833d35677c2ff34a908951de142cc1653de6080ad4e38f4c9cc00aafe',
         ),
         (
-            'TESTER.eth',
-            'tester.eth',
+            'TESTER.vns',
+            'tester.vns',
             '2a7ac1c833d35677c2ff34a908951de142cc1653de6080ad4e38f4c9cc00aafe',
         ),
         (
-            'tester．eth',
-            'tester.eth',
+            'tester．vns',
+            'tester.vns',
             '2a7ac1c833d35677c2ff34a908951de142cc1653de6080ad4e38f4c9cc00aafe',
         ),
         (
-            'tester。eth',
-            'tester.eth',
+            'tester。vns',
+            'tester.vns',
             '2a7ac1c833d35677c2ff34a908951de142cc1653de6080ad4e38f4c9cc00aafe',
         ),
         (
-            'tester｡eth',
-            'tester.eth',
+            'tester｡vns',
+            'tester.vns',
             '2a7ac1c833d35677c2ff34a908951de142cc1653de6080ad4e38f4c9cc00aafe',
         ),
         # confirm that set-owner works
         (
-            'lots.of.subdomains.tester.eth',
-            'lots.of.subdomains.tester.eth',
+            'lots.of.subdomains.tester.vns',
+            'lots.of.subdomains.tester.vns',
             '0d62a759aa1f1c9680de8603a12a5eb175cd1bfa79426229868eba99f4dce692',
         ),
     ],
 )
 def test_setup_name(ens, name, normalized_name, namehash_hex):
-    address = ens.web3.eth.accounts[3]
+    address = ens.web3.vns.accounts[3]
     assert not ens.name(address)
-    owner = ens.owner('tester.eth')
+    owner = ens.owner('tester.vns')
 
     ens.setup_name(name, address)
     assert ens.name(address) == normalized_name
@@ -76,15 +76,15 @@ def test_setup_name(ens, name, normalized_name, namehash_hex):
 
 
 def test_cannot_set_name_on_mismatch_address(ens, TEST_ADDRESS):
-    ens.setup_address('mismatch-reverse.tester.eth', TEST_ADDRESS)
+    ens.setup_address('mismatch-reverse.tester.vns', TEST_ADDRESS)
     with pytest.raises(AddressMismatch):
-        ens.setup_name('mismatch-reverse.tester.eth', '0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413')
+        ens.setup_name('mismatch-reverse.tester.vns', '0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413')
 
 
 def test_setup_name_default_address(ens):
-    name = 'reverse-defaults-to-forward.tester.eth'
-    owner = ens.owner('tester.eth')
-    new_resolution = ens.web3.eth.accounts[-1]
+    name = 'reverse-defaults-to-forward.tester.vns'
+    owner = ens.owner('tester.vns')
+    new_resolution = ens.web3.vns.accounts[-1]
     ens.setup_address(name, new_resolution)
     assert not ens.name(new_resolution)
     assert ens.owner(name) == owner
@@ -95,8 +95,8 @@ def test_setup_name_default_address(ens):
 
 
 def test_setup_name_default_to_owner(ens):
-    name = 'reverse-defaults-to-owner.tester.eth'
-    new_owner = ens.web3.eth.accounts[-1]
+    name = 'reverse-defaults-to-owner.tester.vns'
+    new_owner = ens.web3.vns.accounts[-1]
     ens.setup_owner(name, new_owner)
     assert not ens.name(new_owner)
     assert ens.owner(name) == new_owner
@@ -107,7 +107,7 @@ def test_setup_name_default_to_owner(ens):
 
 def test_setup_name_unowned_exception(ens):
     with pytest.raises(UnownedName):
-        ens.setup_name('unowned-name.tester.eth')
+        ens.setup_name('unowned-name.tester.vns')
 
 
 def test_setup_name_unauthorized(ens, TEST_ADDRESS):
@@ -117,16 +117,16 @@ def test_setup_name_unauthorized(ens, TEST_ADDRESS):
 
 def test_setup_reverse_dict_unmodified(ens):
     # setup
-    owner = ens.owner('tester.eth')
-    eth = ens.web3.eth
-    start_count = eth.getTransactionCount(owner)
+    owner = ens.owner('tester.vns')
+    vns = ens.web3.vns
+    start_count = vns.getTransactionCount(owner)
 
-    address = ens.web3.eth.accounts[3]
+    address = ens.web3.vns.accounts[3]
     transact = {}
-    ens.setup_name('tester.eth', address, transact=transact)
+    ens.setup_name('tester.vns', address, transact=transact)
 
     # even though a transaction was issued, the dict argument was not modified
-    assert eth.getTransactionCount(owner) > start_count
+    assert vns.getTransactionCount(owner) > start_count
     assert transact == {}
 
     # teardown

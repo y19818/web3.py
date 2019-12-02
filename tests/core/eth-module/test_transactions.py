@@ -16,7 +16,7 @@ RECEIPT_TIMEOUT = 0.2
     'make_chain_id, expect_success',
     (
         (
-            lambda web3: web3.eth.chainId,
+            lambda web3: web3.net.version,
             True,
         ),
         pytest.param(
@@ -27,35 +27,35 @@ RECEIPT_TIMEOUT = 0.2
 )
 def test_send_transaction_with_valid_chain_id(web3, make_chain_id, expect_success):
     transaction = {
-        'to': web3.eth.accounts[1],
+        'to': web3.vns.accounts[1],
         'chainId': make_chain_id(web3),
     }
     if expect_success:
-        txn_hash = web3.eth.sendTransaction(transaction)
-        receipt = web3.eth.waitForTransactionReceipt(txn_hash, timeout=RECEIPT_TIMEOUT)
+        txn_hash = web3.vns.sendTransaction(transaction)
+        receipt = web3.vns.waitForTransactionReceipt(txn_hash, timeout=RECEIPT_TIMEOUT)
         assert receipt.get('blockNumber') is not None
     else:
         with pytest.raises(ValidationError) as exc_info:
-            web3.eth.sendTransaction(transaction)
+            web3.vns.sendTransaction(transaction)
 
         assert 'chain ID' in str(exc_info.value)
 
 
 def test_wait_for_missing_receipt(web3):
     with pytest.raises(TimeExhausted):
-        web3.eth.waitForTransactionReceipt(b'\0' * 32, timeout=RECEIPT_TIMEOUT)
+        web3.vns.waitForTransactionReceipt(b'\0' * 32, timeout=RECEIPT_TIMEOUT)
 
 
 def test_unmined_transaction_wait_for_receipt(web3):
     web3.middleware_onion.add(unmined_receipt_simulator_middleware)
-    txn_hash = web3.eth.sendTransaction({
-        'from': web3.eth.coinbase,
+    txn_hash = web3.vns.sendTransaction({
+        'from': web3.vns.coinbase,
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 123457
     })
     with pytest.raises(TransactionNotFound):
-        web3.eth.getTransactionReceipt(txn_hash)
+        web3.vns.getTransactionReceipt(txn_hash)
 
-    txn_receipt = web3.eth.waitForTransactionReceipt(txn_hash)
+    txn_receipt = web3.vns.waitForTransactionReceipt(txn_hash)
     assert txn_receipt['transactionHash'] == txn_hash
     assert txn_receipt['blockHash'] is not None

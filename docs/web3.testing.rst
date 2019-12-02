@@ -7,7 +7,7 @@ Testing API
 .. py:class:: Testing
 
 The ``web3.testing`` object exposes methods to interact with non-standard RPC
-APIs that are only available under the python ``eth-testrpc`` package.
+APIs that are only available under the python ``vns-testrpc`` package.
 
 
 Methods

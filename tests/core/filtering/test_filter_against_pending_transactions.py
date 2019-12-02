@@ -19,15 +19,15 @@ def test_sync_filter_against_pending_transactions(web3_empty,
     web3 = web3_empty
     skip_if_testrpc(web3)
 
-    txn_filter = web3.eth.filter("pending")
+    txn_filter = web3.vns.filter("pending")
 
-    txn_1_hash = web3.eth.sendTransaction({
-        'from': web3.eth.coinbase,
+    txn_1_hash = web3.vns.sendTransaction({
+        'from': web3.vns.coinbase,
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 12345,
     })
-    txn_2_hash = web3.eth.sendTransaction({
-        'from': web3.eth.coinbase,
+    txn_2_hash = web3.vns.sendTransaction({
+        'from': web3.vns.coinbase,
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 54321,
     })
@@ -55,16 +55,16 @@ def test_async_filter_against_pending_transactions(web3_empty,
     skip_if_testrpc(web3)
 
     seen_txns = []
-    txn_filter = web3.eth.filter("pending")
+    txn_filter = web3.vns.filter("pending")
     txn_filter.watch(seen_txns.append)
 
-    txn_1_hash = web3.eth.sendTransaction({
-        'from': web3.eth.coinbase,
+    txn_1_hash = web3.vns.sendTransaction({
+        'from': web3.vns.coinbase,
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 12345,
     })
-    txn_2_hash = web3.eth.sendTransaction({
-        'from': web3.eth.coinbase,
+    txn_2_hash = web3.vns.sendTransaction({
+        'from': web3.vns.coinbase,
         'to': '0xd3CdA913deB6f67967B99D67aCDFa1712C293601',
         'value': 54321,
     })

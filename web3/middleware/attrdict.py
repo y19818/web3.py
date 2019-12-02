@@ -1,35 +1,20 @@
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-)
-
-from eth_utils import (
+from vns_utils import (
     is_dict,
 )
-from eth_utils.toolz import (
+
+from web3._utils.toolz import (
     assoc,
 )
-
 from web3.datastructures import (
     AttributeDict,
 )
-from web3.types import (
-    RPCEndpoint,
-    RPCResponse,
-)
-
-if TYPE_CHECKING:
-    from web3 import Web3  # noqa: F401
 
 
-def attrdict_middleware(
-    make_request: Callable[[RPCEndpoint, Any], Any], web3: "Web3"
-) -> Callable[[RPCEndpoint, Any], RPCResponse]:
+def attrdict_middleware(make_request, web3):
     """
     Converts any result which is a dictionary into an a
     """
-    def middleware(method: RPCEndpoint, params: Any) -> RPCResponse:
+    def middleware(method, params):
         response = make_request(method, params)
 
         if 'result' in response:

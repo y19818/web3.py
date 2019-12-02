@@ -14,9 +14,7 @@ from web3._utils.module_testing import (
 from .common import (
     CommonParityShhModuleTest,
     ParityEthModuleTest,
-    ParityModuleTest,
     ParityPersonalModuleTest,
-    ParitySetModuleTest,
     ParityTraceModuleTest,
     ParityWeb3ModuleTest,
 )
@@ -49,7 +47,6 @@ def parity_command_arguments(
         '--unlock', author,
         '--password', passwordfile,
         '--ipc-apis', 'all',
-        '--jsonrpc-experimental',
         '--no-jsonrpc',
         '--no-ws',
         '--whisper',
@@ -66,7 +63,6 @@ def parity_import_blocks_command(parity_binary, ipc_path, datadir, passwordfile)
         '--base-path', datadir,
         '--password', passwordfile,
         '--ipc-apis', 'all',
-        '--jsonrpc-experimental',
         '--no-jsonrpc',
         '--no-ws',
         '--tracing', 'on',
@@ -76,7 +72,7 @@ def parity_import_blocks_command(parity_binary, ipc_path, datadir, passwordfile)
 @pytest.fixture(scope="module")  # noqa: F811
 def web3(parity_process, ipc_path):
     wait_for_socket(ipc_path)
-    _web3 = Web3(Web3.IPCProvider(ipc_path))
+    _web3 = Web3 (Web3.IPCProvider(ipc_path))
     return _web3
 
 
@@ -101,14 +97,6 @@ class TestParityPersonalModuleTest(ParityPersonalModuleTest):
 
 
 class TestParityTraceModuleTest(ParityTraceModuleTest):
-    pass
-
-
-class TestParityModuleTest(ParityModuleTest):
-    pass
-
-
-class TestParitySetModuleTest(ParitySetModuleTest):
     pass
 
 

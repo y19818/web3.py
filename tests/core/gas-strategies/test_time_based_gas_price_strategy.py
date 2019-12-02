@@ -136,8 +136,8 @@ def _get_block_by_something(method, params):
 )
 def test_time_based_gas_price_strategy(strategy_params, expected):
     fixture_middleware = construct_result_generator_middleware({
-        'eth_getBlockByHash': _get_block_by_something,
-        'eth_getBlockByNumber': _get_block_by_something,
+        'vns_getBlockByHash': _get_block_by_something,
+        'vns_getBlockByNumber': _get_block_by_something,
     })
 
     w3 = Web3(
@@ -148,8 +148,8 @@ def test_time_based_gas_price_strategy(strategy_params, expected):
     time_based_gas_price_strategy = construct_time_based_gas_price_strategy(
         **strategy_params,
     )
-    w3.eth.setGasPriceStrategy(time_based_gas_price_strategy)
-    actual = w3.eth.generateGasPrice()
+    w3.vns.setGasPriceStrategy(time_based_gas_price_strategy)
+    actual = w3.vns.generateGasPrice()
     assert actual == expected
 
 
@@ -190,8 +190,8 @@ def test_time_based_gas_price_strategy_zero_sample(strategy_params_zero,
                                                    expected_exception_message):
     with pytest.raises(ValidationError) as excinfo:
         fixture_middleware = construct_result_generator_middleware({
-            'eth_getBlockByHash': _get_block_by_something,
-            'eth_getBlockByNumber': _get_block_by_something,
+            'vns_getBlockByHash': _get_block_by_something,
+            'vns_getBlockByNumber': _get_block_by_something,
         })
 
         w3 = Web3(
@@ -201,6 +201,6 @@ def test_time_based_gas_price_strategy_zero_sample(strategy_params_zero,
         time_based_gas_price_strategy_zero = construct_time_based_gas_price_strategy(
             **strategy_params_zero,
         )
-        w3.eth.setGasPriceStrategy(time_based_gas_price_strategy_zero)
-        w3.eth.generateGasPrice()
+        w3.vns.setGasPriceStrategy(time_based_gas_price_strategy_zero)
+        w3.vns.generateGasPrice()
     assert str(excinfo.value) == expected_exception_message

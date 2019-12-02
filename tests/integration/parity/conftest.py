@@ -3,7 +3,7 @@ import pytest
 import tempfile
 import zipfile
 
-from eth_utils import (
+from vns_utils import (
     is_checksum_address,
     is_dict,
 )
@@ -106,7 +106,7 @@ def parity_import_blocks_process(parity_import_blocks_command):
 
 @pytest.fixture(scope='module')
 def coinbase(web3):
-    return web3.eth.coinbase
+    return web3.vns.coinbase
 
 
 @pytest.fixture(scope="module")
@@ -168,14 +168,14 @@ def funded_account_for_raw_txn(parity_fixture_data):
 
 @pytest.fixture(scope="module")
 def empty_block(web3, parity_fixture_data):
-    block = web3.eth.getBlock(parity_fixture_data['empty_block_hash'])
+    block = web3.vns.getBlock(parity_fixture_data['empty_block_hash'])
     assert is_dict(block)
     return block
 
 
 @pytest.fixture(scope="module")
 def block_with_txn(web3, parity_fixture_data):
-    block = web3.eth.getBlock(parity_fixture_data['block_with_txn_hash'])
+    block = web3.vns.getBlock(parity_fixture_data['block_with_txn_hash'])
     assert is_dict(block)
     return block
 
@@ -187,7 +187,7 @@ def mined_txn_hash(parity_fixture_data):
 
 @pytest.fixture(scope="module")
 def block_with_txn_with_log(web3, parity_fixture_data):
-    block = web3.eth.getBlock(parity_fixture_data['block_hash_with_log'])
+    block = web3.vns.getBlock(parity_fixture_data['block_hash_with_log'])
     assert is_dict(block)
     return block
 

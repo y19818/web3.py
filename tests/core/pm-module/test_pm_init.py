@@ -1,6 +1,8 @@
-import json
 import pytest
 
+from vns_utils import (
+    to_canonical_address,
+)
 from ethpm import (
     Package,
 )
@@ -9,9 +11,6 @@ from ethpm.exceptions import (
 )
 from ethpm.tools import (
     get_manifest as get_ethpm_manifest,
-)
-from web3.exceptions import (
-    PMError,
 )
 
 
@@ -33,8 +32,8 @@ def test_get_contract_factory_with_valid_owned_manifest(w3):
     owned_package = w3.pm.get_package_from_manifest(owned_manifest)
     owned_factory = owned_package.get_contract_factory('Owned')
     tx_hash = owned_factory.constructor().transact()
-    tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    owned_address = tx_receipt.contractAddress
+    tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
+    owned_address = to_canonical_address(tx_receipt.contractAddress)
     owned_instance = owned_package.get_contract_instance("Owned", owned_address)
     assert owned_instance.abi == owned_factory.abi
 
@@ -44,8 +43,8 @@ def test_get_contract_factory_with_valid_safe_math_lib_manifest(w3):
     safe_math_package = w3.pm.get_package_from_manifest(safe_math_lib_manifest)
     safe_math_factory = safe_math_package.get_contract_factory("SafeMathLib")
     tx_hash = safe_math_factory.constructor().transact()
-    tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    safe_math_address = tx_receipt.contractAddress
+    tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
+    safe_math_address = to_canonical_address(tx_receipt.contractAddress)
     safe_math_instance = safe_math_package.get_contract_instance("SafeMathLib", safe_math_address)
     assert safe_math_instance.functions.safeAdd(1, 2).call() == 3
 
@@ -57,15 +56,15 @@ def test_get_contract_factory_with_valid_escrow_manifest(w3):
     assert escrow_factory.needs_bytecode_linking
     safe_send_factory = escrow_package.get_contract_factory('SafeSendLib')
     safe_send_tx_hash = safe_send_factory.constructor().transact()
-    safe_send_tx_receipt = w3.eth.waitForTransactionReceipt(safe_send_tx_hash)
-    safe_send_address = safe_send_tx_receipt.contractAddress
+    safe_send_tx_receipt = w3.vns.waitForTransactionReceipt(safe_send_tx_hash)
+    safe_send_address = to_canonical_address(safe_send_tx_receipt.contractAddress)
     linked_escrow_factory = escrow_factory.link_bytecode({"SafeSendLib": safe_send_address})
     assert linked_escrow_factory.needs_bytecode_linking is False
-    escrow_tx_hash = linked_escrow_factory.constructor(w3.eth.accounts[0]).transact()
-    escrow_tx_receipt = w3.eth.waitForTransactionReceipt(escrow_tx_hash)
-    escrow_address = escrow_tx_receipt.contractAddress
+    escrow_tx_hash = linked_escrow_factory.constructor(w3.vns.accounts[0]).transact()
+    escrow_tx_receipt = w3.vns.waitForTransactionReceipt(escrow_tx_hash)
+    escrow_address = to_canonical_address(escrow_tx_receipt.contractAddress)
     escrow_instance = linked_escrow_factory(address=escrow_address)
-    assert escrow_instance.functions.sender().call() == w3.eth.accounts[0]
+    assert escrow_instance.functions.sender().call() == w3.vns.accounts[0]
 
 
 def test_deploy_a_standalone_package_integration(w3):
@@ -75,9 +74,9 @@ def test_deploy_a_standalone_package_integration(w3):
     ERC20 = token_package.get_contract_factory('StandardToken')
     # totalSupply = 100
     tx_hash = ERC20.constructor(100).transact()
-    tx_receipt = w3.eth.getTransactionReceipt(tx_hash)
-    address = tx_receipt["contractAddress"]
-    erc20 = w3.eth.contract(address=address, abi=ERC20.abi)
+    tx_receipt = w3.vns.getTransactionReceipt(tx_hash)
+    address = to_canonical_address(tx_receipt["contractAddress"])
+    erc20 = w3.vns.contract(address=address, abi=ERC20.abi)
     total_supply = erc20.functions.totalSupply().call()
     assert total_supply == 100
 
@@ -90,34 +89,3 @@ def test_pm_init_with_manifest_uri(w3, monkeypatch):
     pkg = w3.pm.get_package_from_uri(dummy_standard_token_uri)
     assert isinstance(pkg, Package)
     assert pkg.name == "standard-token"
-
-
-@pytest.fixture
-def tmp_ethpmdir(tmp_path):
-    owned_manifest = get_ethpm_manifest("owned", "1.0.0.json")
-    ethpmdir = tmp_path / '_ethpm_packages'
-    ethpmdir.mkdir()
-    owned_dir = ethpmdir / 'owned'
-    owned_dir.mkdir()
-    manifest = owned_dir / 'manifest.json'
-    manifest.touch()
-    manifest.write_text(json.dumps(owned_manifest, sort_keys=True, separators=(",", ":")))
-    return ethpmdir
-
-
-def test_get_local_package(w3, tmp_ethpmdir):
-    pkg = w3.pm.get_local_package("owned", tmp_ethpmdir)
-    assert isinstance(pkg, Package)
-    assert pkg.name == "owned"
-
-
-def test_get_local_package_with_invalid_ethpmdir(w3, tmp_path):
-    invalid_ethpmdir = tmp_path / 'invalid'
-    invalid_ethpmdir.mkdir()
-    with pytest.raises(PMError, match="not a valid ethPM packages directory."):
-        w3.pm.get_local_package("owned", invalid_ethpmdir)
-
-
-def test_get_local_package_with_uninstalled_package(w3, tmp_ethpmdir):
-    with pytest.raises(PMError, match="Package: safe-math not found in "):
-        w3.pm.get_local_package("safe-math", tmp_ethpmdir)

@@ -1,29 +1,24 @@
 import pytest
 
-from eth_account import (
-    Account,
-)
-from eth_account.signers.local import (
-    LocalAccount,
-)
-import eth_keys
-from eth_tester.exceptions import (
+import vns_account
+import vns_keys
+from vns_tester.exceptions import (
     ValidationError,
 )
-from eth_utils import (
+from vns_utils import (
     to_bytes,
     to_hex,
-)
-from eth_utils.toolz import (
-    identity,
-    merge,
-    valfilter,
 )
 from hexbytes import (
     HexBytes,
 )
 
 from web3 import Web3
+from web3._utils.toolz import (
+    identity,
+    merge,
+    valfilter,
+)
 from web3.exceptions import (
     InvalidAddress,
 )
@@ -37,7 +32,7 @@ from web3.middleware.signing import (
 from web3.providers import (
     BaseProvider,
 )
-from web3.providers.eth_tester import (
+from web3.providers.vns_tester import (
     EthereumTesterProvider,
 )
 
@@ -52,8 +47,8 @@ PRIVATE_KEY_2 = to_bytes(
 ADDRESS_2 = '0x91eD14b5956DBcc1310E65DC4d7E82f02B95BA46'
 
 KEY_FUNCS = (
-    eth_keys.keys.PrivateKey,
-    Account.from_key,
+    vns_keys.keys.PrivateKey,
+    vns_account.Account.privateKeyToAccount,
     HexBytes,
     to_hex,
     identity,
@@ -67,12 +62,12 @@ MIXED_KEY_MIXED_TYPE = tuple(
 )
 
 SAME_KEY_SAME_TYPE = (
-    eth_keys.keys.PrivateKey(PRIVATE_KEY_1),
-    eth_keys.keys.PrivateKey(PRIVATE_KEY_1)
+    vns_keys.keys.PrivateKey(PRIVATE_KEY_1),
+    vns_keys.keys.PrivateKey(PRIVATE_KEY_1)
 )
 
 MIXED_KEY_SAME_TYPE = (
-    eth_keys.keys.PrivateKey(PRIVATE_KEY_1), eth_keys.keys.PrivateKey(PRIVATE_KEY_2)
+    vns_keys.keys.PrivateKey(PRIVATE_KEY_1), vns_keys.keys.PrivateKey(PRIVATE_KEY_2)
 )
 
 
@@ -87,9 +82,8 @@ class DummyProvider(BaseProvider):
 @pytest.fixture()
 def result_generator_middleware():
     return construct_result_generator_middleware({
-        'eth_sendRawTransaction': lambda *args: args,
+        'vns_sendRawTransaction': lambda *args: args,
         'net_version': lambda *_: 1,
-        'eth_chainId': lambda *_: "0x02",
     })
 
 
@@ -111,27 +105,27 @@ def hex_to_bytes(s):
 @pytest.mark.parametrize(
     'method,key_object,from_,expected',
     (
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE, ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE, ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', MIXED_KEY_MIXED_TYPE, ADDRESS_2, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', MIXED_KEY_MIXED_TYPE, ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_SAME_TYPE, ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_SAME_TYPE, ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', MIXED_KEY_SAME_TYPE, ADDRESS_2, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', MIXED_KEY_SAME_TYPE, ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[0], ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[1], ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[2], ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[3], ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[4], ADDRESS_1, 'eth_sendRawTransaction'),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[0], ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[1], ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[2], ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[3], ADDRESS_2, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_MIXED_TYPE[4], ADDRESS_2, NotImplementedError),
-        ('eth_call', MIXED_KEY_MIXED_TYPE, ADDRESS_1, NotImplementedError),
-        ('eth_sendTransaction', SAME_KEY_SAME_TYPE, hex_to_bytes(ADDRESS_1),
-         'eth_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE, ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE, ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', MIXED_KEY_MIXED_TYPE, ADDRESS_2, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', MIXED_KEY_MIXED_TYPE, ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_SAME_TYPE, ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_SAME_TYPE, ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', MIXED_KEY_SAME_TYPE, ADDRESS_2, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', MIXED_KEY_SAME_TYPE, ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[0], ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[1], ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[2], ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[3], ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[4], ADDRESS_1, 'vns_sendRawTransaction'),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[0], ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[1], ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[2], ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[3], ADDRESS_2, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_MIXED_TYPE[4], ADDRESS_2, NotImplementedError),
+        ('vns_call', MIXED_KEY_MIXED_TYPE, ADDRESS_1, NotImplementedError),
+        ('vns_sendTransaction', SAME_KEY_SAME_TYPE, hex_to_bytes(ADDRESS_1),
+         'vns_sendRawTransaction'),
     )
 )
 def test_sign_and_send_raw_middleware(
@@ -194,7 +188,7 @@ def w3():
 )
 def test_gen_normalized_accounts(key_object):
     accounts = gen_normalized_accounts(key_object)
-    assert all(isinstance(account, LocalAccount) for account in accounts.values())
+    assert all(isinstance(account, vns_account.local.LocalAccount) for account in accounts.values())
 
 
 def test_gen_normalized_accounts_type_error(w3):
@@ -207,12 +201,12 @@ def fund_account(w3):
     # fund local account
     tx_value = w3.toWei(10, 'ether')
     for address in (ADDRESS_1, ADDRESS_2):
-        w3.eth.sendTransaction({
+        w3.vns.sendTransaction({
             'to': address,
-            'from': w3.eth.accounts[0],
+            'from': w3.vns.accounts[0],
             'gas': 21000,
             'value': tx_value})
-        assert w3.eth.getBalance(address) == tx_value
+        assert w3.vns.getBalance(address) == tx_value
 
 
 @pytest.mark.parametrize(
@@ -271,18 +265,18 @@ def test_signed_transaction(
     w3.middleware_onion.add(construct_sign_and_send_raw_middleware(key_object))
 
     # Drop any falsy addresses
-    to_from = valfilter(bool, {'to': w3.eth.accounts[0], 'from': from_})
+    to_from = valfilter(bool, {'to': w3.vns.accounts[0], 'from': from_})
 
     _transaction = merge(transaction, to_from)
 
     if isinstance(expected, type) and issubclass(expected, Exception):
         with pytest.raises(expected):
-            start_balance = w3.eth.getBalance(_transaction.get('from', w3.eth.accounts[0]))
-            w3.eth.sendTransaction(_transaction)
+            start_balance = w3.vns.getBalance(_transaction.get('from', w3.vns.accounts[0]))
+            w3.vns.sendTransaction(_transaction)
     else:
-        start_balance = w3.eth.getBalance(_transaction.get('from', w3.eth.accounts[0]))
-        w3.eth.sendTransaction(_transaction)
-        assert w3.eth.getBalance(_transaction.get('from')) <= start_balance + expected
+        start_balance = w3.vns.getBalance(_transaction.get('from', w3.vns.accounts[0]))
+        w3.vns.sendTransaction(_transaction)
+        assert w3.vns.getBalance(_transaction.get('from')) <= start_balance + expected
 
 
 @pytest.mark.parametrize(
@@ -306,7 +300,7 @@ def test_sign_and_send_raw_middleware_with_byte_addresses(
         construct_sign_and_send_raw_middleware(private_key))
 
     actual = w3_dummy.manager.request_blocking(
-        'eth_sendTransaction',
+        'vns_sendTransaction',
         [{
             'to': to_,
             'from': from_,
@@ -317,5 +311,5 @@ def test_sign_and_send_raw_middleware_with_byte_addresses(
         }])
     raw_txn = actual[1][0]
     actual_method = actual[0]
-    assert actual_method == 'eth_sendRawTransaction'
+    assert actual_method == 'vns_sendRawTransaction'
     assert isinstance(raw_txn, bytes)

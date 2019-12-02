@@ -3,7 +3,7 @@ from unittest.mock import (
     Mock,
 )
 
-from eth_utils import (
+from vns_utils import (
     decode_hex,
 )
 
@@ -17,10 +17,10 @@ from web3.contract import (
 def deploy(web3, Contract, args=None):
     args = args or []
     deploy_txn = Contract.constructor(*args).transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     contract = Contract(address=deploy_receipt['contractAddress'])
-    assert len(web3.eth.getCode(contract.address)) > 0
+    assert len(web3.vns.getCode(contract.address)) > 0
     return contract
 
 
@@ -35,13 +35,12 @@ def zero_address_contract(web3, WithConstructorAddressArgumentsContract, EMPTY_A
     deploy_txn = WithConstructorAddressArgumentsContract.constructor(
         EMPTY_ADDR,
     ).transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     _address_contract = WithConstructorAddressArgumentsContract(
         address=deploy_receipt['contractAddress'],
     )
-    with pytest.warns(DeprecationWarning, match='deprecated in favor of contract.caller'):
-        return ConciseContract(_address_contract)
+    return ConciseContract(_address_contract)
 
 
 def test_concisecontract_call_default():
@@ -87,7 +86,7 @@ def test_class_construction_sets_class_vars(web3,
                                             MATH_RUNTIME,
                                             some_address,
                                             ):
-    MathContract = web3.eth.contract(
+    MathContract = web3.vns.contract(
         abi=MATH_ABI,
         bytecode=MATH_CODE,
         bytecode_runtime=MATH_RUNTIME,
@@ -100,14 +99,13 @@ def test_class_construction_sets_class_vars(web3,
 
 
 def test_conciscecontract_keeps_custom_normalizers_on_base(web3, MATH_ABI):
-    base_contract = web3.eth.contract(abi=MATH_ABI)
+    base_contract = web3.vns.contract(abi=MATH_ABI)
     # give different normalizers to this base instance
     base_contract._return_data_normalizers = base_contract._return_data_normalizers + tuple([None])
 
     # create concisce contract with custom contract
     new_normalizers_size = len(base_contract._return_data_normalizers)
-    with pytest.warns(DeprecationWarning, match='deprecated in favor of contract.caller'):
-        concise = ConciseContract(base_contract)
+    concise = ConciseContract(base_contract)
 
     # check that concise contract includes the new normalizers
     concise_normalizers_size = len(concise._classic_contract._return_data_normalizers)
@@ -129,8 +127,7 @@ def test_conciscecontract_function_collision(
 
     setattr(ConciseContract, 'getValue', getValue)
 
-    with pytest.warns(DeprecationWarning, match='deprecated in favor of contract.caller'):
-        concise_contract = ConciseContract(contract)
+    concise_contract = ConciseContract(contract)
 
     assert isinstance(concise_contract, ConciseContract)
 

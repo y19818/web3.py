@@ -1,7 +1,7 @@
 methods/*
     These files define all methods callable under
     web3.db.*
-    web3.eth.*
+    web3.vns.*
     web3.net.*
     web3.personal.*
     web3.shh.*

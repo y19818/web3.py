@@ -1,15 +1,18 @@
 import pytest
 
-from eth_utils import (
+from vnsutils import (
     to_bytes,
 )
-from eth_utils.toolz import (
+
+from web3._utils.toolz import (
     identity,
 )
 
 from .utils import (
     get_open_port,
 )
+
+pytest_plugins = ["pytest_ethereum.plugins"]
 
 
 @pytest.fixture(scope="module", params=[lambda x: to_bytes(hexstr=x), identity])

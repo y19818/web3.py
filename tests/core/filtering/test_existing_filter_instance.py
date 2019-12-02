@@ -3,7 +3,7 @@ import pytest
 from web3._utils.threads import (
     Timeout,
 )
-from web3.providers.eth_tester import (
+from web3.providers.vns_tester import (
     EthereumTesterProvider,
 )
 
@@ -13,21 +13,21 @@ def filter_id(web3):
     if not isinstance(web3.provider, EthereumTesterProvider):
         web3.provider = EthereumTesterProvider()
 
-    block_filter = web3.eth.filter("latest")
+    block_filter = web3.vns.filter("latest")
     return block_filter.filter_id
 
 
 def test_instatiate_existing_filter(web3, sleep_interval, wait_for_block, filter_id):
     with pytest.raises(TypeError):
-        web3.eth.filter('latest', filter_id)
+        web3.vns.filter('latest', filter_id)
     with pytest.raises(TypeError):
-        web3.eth.filter('latest', filter_id=filter_id)
+        web3.vns.filter('latest', filter_id=filter_id)
     with pytest.raises(TypeError):
-        web3.eth.filter(filter_params='latest', filter_id=filter_id)
+        web3.vns.filter(filter_params='latest', filter_id=filter_id)
 
-    block_filter = web3.eth.filter(filter_id=filter_id)
+    block_filter = web3.vns.filter(filter_id=filter_id)
 
-    current_block = web3.eth.blockNumber
+    current_block = web3.vns.blockNumber
 
     wait_for_block(web3, current_block + 3)
 
@@ -40,6 +40,6 @@ def test_instatiate_existing_filter(web3, sleep_interval, wait_for_block, filter
     assert len(found_block_hashes) == 3
 
     expected_block_hashes = [
-        web3.eth.getBlock(n + 1).hash for n in range(current_block, current_block + 3)
+        web3.vns.getBlock(n + 1).hash for n in range(current_block, current_block + 3)
     ]
     assert found_block_hashes == expected_block_hashes

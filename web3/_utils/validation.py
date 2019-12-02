@@ -1,6 +1,6 @@
 import itertools
 
-from eth_utils import (
+from vns_utils import (
     function_abi_to_4byte_selector,
     is_0x_prefixed,
     is_binary_address,
@@ -13,17 +13,8 @@ from eth_utils import (
     is_list_like,
     is_string,
 )
-from eth_utils.curried import (
-    apply_formatter_to_array,
-)
-from eth_utils.hexadecimal import (
+from vns_utils.hexadecimal import (
     encode_hex,
-)
-from eth_utils.toolz import (
-    compose,
-    groupby,
-    valfilter,
-    valmap,
 )
 
 from web3._utils.abi import (
@@ -39,6 +30,15 @@ from web3._utils.abi import (
     is_uint_type,
     length_of_array_type,
     sub_type_of_array_type,
+)
+from web3._utils.formatters import (
+    apply_formatter_to_array,
+)
+from web3._utils.toolz import (
+    compose,
+    groupby,
+    valfilter,
+    valmap,
 )
 from web3.exceptions import (
     InvalidAddress,

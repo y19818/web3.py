@@ -3,52 +3,54 @@ from abc import (
     abstractmethod,
 )
 import json
-from pathlib import (
-    Path,
-)
 from typing import (
     Any,
     Dict,
     Iterable,
-    NamedTuple,
+    List,
+    NewType,
     Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
 )
 
-from eth_typing import (
-    URI,
-    Address,
-    ChecksumAddress,
-    ContractName,
-    Manifest,
-)
-from eth_utils import (
+from vns_utils import (
     is_canonical_address,
     is_checksum_address,
+    to_bytes,
+    to_canonical_address,
     to_checksum_address,
     to_text,
     to_tuple,
 )
-
+from vns_utils.toolz import (
+    concat,
+)
 from ethpm import (
     ASSETS_DIR,
     Package,
 )
-from ethpm.uri import (
-    is_supported_content_addressed_uri,
+from ethpm.typing import (
+    URI,
+    Address,
+    Manifest,
+)
+from ethpm.utils.backend import (
     resolve_uri_contents,
 )
-from ethpm.validation.manifest import (
+from ethpm.utils.ipfs import (
+    is_ipfs_uri,
+)
+from ethpm.utils.manifest_validation import (
     validate_manifest_against_schema,
     validate_raw_manifest_format,
 )
-from ethpm.validation.package import (
+from ethpm.utils.uri import (
+    is_valid_content_addressed_github_uri,
+)
+from ethpm.validation import (
     validate_package_name,
     validate_package_version,
 )
+
 from web3 import Web3
 from web3._utils.ens import (
     is_ens_name,
@@ -62,9 +64,9 @@ from web3.exceptions import (
 from web3.module import (
     Module,
 )
-from web3.types import (
-    ENS,
-)
+
+TxReceipt = NewType("TxReceipt", Dict[str, Any])
+
 
 # Package Management is still in alpha, and its API is likely to change, so it
 # is not automatically available on a web3 instance. To use the `PM` module,
@@ -77,22 +79,14 @@ from web3.types import (
 # >>> w3.pm
 # <web3.pm.PM at 0x....>
 
-T = TypeVar("T")
 
-
-class ReleaseData(NamedTuple):
-    package_name: str
-    version: str
-    manifest_uri: URI
-
-
-class ERC1319Registry(ABC):
+class ERCRegistry(ABC):
     """
-    The ERC1319Registry class is a base class for all registry implementations to inherit from. It
+    The ERCRegistry class is a base class for all registry implementations to inherit from. It
     defines the methods specified in `ERC 1319 <https://github.com/ethereum/EIPs/issues/1319>`__.
     All of these methods are prefixed with an underscore, since they are not intended to be
     accessed directly, but rather through the methods on ``web3.pm``. They are unlikely to change,
-    but must be implemented in a `ERC1319Registry` subclass in order to be compatible with the
+    but must be implemented in a `ERCRegistry` subclass in order to be compatible with the
     `PM` module. Any custom methods (eg. not definied in ERC1319) in a subclass
     should *not* be prefixed with an underscore.
 
@@ -146,7 +140,7 @@ class ERC1319Registry(ABC):
         pass
 
     @abstractmethod
-    def _get_all_package_ids(self) -> Iterable[bytes]:
+    def _get_all_package_ids(self) -> Tuple[bytes]:
         """
         Returns a tuple containing all of the package ids found on the connected registry.
         """
@@ -165,7 +159,7 @@ class ERC1319Registry(ABC):
         pass
 
     @abstractmethod
-    def _get_all_release_ids(self, package_name: str) -> Iterable[bytes]:
+    def _get_all_release_ids(self, package_name: str) -> Tuple[bytes]:
         """
         Returns a tuple containg all of the release ids belonging to the given package name,
         if the package has releases on the connected registry.
@@ -176,7 +170,7 @@ class ERC1319Registry(ABC):
         pass
 
     @abstractmethod
-    def _get_release_data(self, release_id: bytes) -> ReleaseData:
+    def _get_release_data(self, release_id: bytes) -> Tuple[str, str, str]:
         """
         Returns a tuple containing (package_name, version, manifest_uri) for the given release id,
         if the release exists on the connected registry.
@@ -217,40 +211,136 @@ class ERC1319Registry(ABC):
         """
         pass
 
+
+class VyperReferenceRegistry(ERCRegistry):
+    """
+    The ``VyperReferenceRegistry`` class implements all of the methods found in ``ERCRegistry``,
+    along with some custom methods included in the `implementation
+    <https://github.com/ethpm/py-ethpm/blob/master/ethpm/assets/vyper_registry/registry.vy>`__.
+    """
+
+    def __init__(self, address: Address, w3: Web3) -> None:
+        # todo: validate runtime bytecode
+        abi = get_vyper_registry_manifest()["contract_types"]["registry"]["abi"]
+        self.registry = w3.vns.contract(address=address, abi=abi)
+        self.address = to_checksum_address(address)
+        self.w3 = w3
+
     @classmethod
-    @abstractmethod
-    def deploy_new_instance(cls: Type[T], w3: Web3) -> T:
+    def deploy_new_instance(cls, w3: Web3) -> "VyperReferenceRegistry":
         """
-        Class method that returns a newly deployed instance of ERC1319Registry.
+        Returns a new instance of ```VyperReferenceRegistry`` representing a freshly deployed
+        instance on the given ``web3`` instance of the Vyper Reference Registry implementation.
+        """
+        manifest = get_vyper_registry_manifest()
+        registry_package = Package(manifest, w3)
+        registry_factory = registry_package.get_contract_factory("registry")
+        tx_hash = registry_factory.constructor().transact()
+        tx_receipt = w3.vns.waitForTransactionReceipt(tx_hash)
+        registry_address = to_canonical_address(tx_receipt.contractAddress)
+        return cls(registry_address, w3)
+
+    def _release(self, package_name: str, version: str, manifest_uri: str) -> bytes:
+        if len(package_name) > 32 or len(version) > 32:
+            raise PMError(
+                "Vyper registry only works with package names and versions less than 32 chars."
+            )
+        if len(manifest_uri) > 1000:
+            raise PMError(
+                "Vyper registry only works with manifest URIs shorter than 1000 chars."
+            )
+        args = process_vyper_args(package_name, version, manifest_uri)
+        tx_hash = self.registry.functions.release(*args).transact()
+        self.w3.vns.waitForTransactionReceipt(tx_hash)
+        return self._get_release_id(package_name, version)
+
+    def _get_package_name(self, package_id: bytes) -> str:
+        package_name = self.registry.functions.getPackageName(package_id).call()
+        return to_text(package_name.rstrip(b"\x00"))
+
+    @to_tuple
+    def _get_all_package_ids(self) -> Iterable[Tuple[bytes]]:
+        num_packages = self._num_package_ids()
+        for index in range(0, num_packages, 4):
+            package_ids = self.registry.functions.getAllPackageIds(index, 5).call()
+            for package_id in package_ids:
+                if package_id != b"\x00" * 32:
+                    yield package_id
+
+    def _get_release_id(self, package_name: str, version: str) -> bytes:
+        actual_args = process_vyper_args(package_name, version)
+        return self.registry.functions.getReleaseId(*actual_args).call()
+
+    @to_tuple
+    def _get_all_release_ids(self, package_name: str) -> Iterable[Tuple[bytes]]:
+        actual_name = process_vyper_args(package_name)
+        num_releases = self.registry.functions.numReleaseIds(*actual_name).call()
+        for index in range(0, num_releases, 4):
+            release_ids = self.registry.functions.getAllReleaseIds(
+                *actual_name, index, 5
+            ).call()
+            for release_id in release_ids:
+                if release_id != b"\x00" * 32:
+                    yield release_id
+
+    @to_tuple
+    def _get_release_data(self, release_id: bytes) -> Iterable[Tuple[str]]:
+        release_data = self.registry.functions.getReleaseData(release_id).call()
+        for data in release_data:
+            if data != b"\x00" * 32:
+                yield to_text(data.rstrip(b"\x00"))
+
+    def _generate_release_id(self, package_name: str, version: str) -> bytes:
+        args = process_vyper_args(package_name, version)
+        return self.registry.functions.generateReleaseId(*args).call()
+
+    def _num_package_ids(self) -> int:
+        return self.registry.functions.numPackageIds().call()
+
+    def _num_release_ids(self, package_name: str) -> int:
+        args = process_vyper_args(package_name)
+        return self.registry.functions.numReleaseIds(*args).call()
+
+    def owner(self) -> Address:
+        """
+        Returns the address of the ``owner`` of this registry instance. Only the ``owner``
+        is allowed to add releases to the Vyper Reference Registry implementation.
+        """
+        return self.registry.functions.owner().call()
+
+    def transfer_owner(self, new_owner: Address) -> TxReceipt:
+        """
+        Transfers ownership of this registry instance to the given ``new_owner``. Only the
+        ``owner`` is allowed to transfer ownership.
 
         * Parameters:
-            * ``w3``: Web3 instance on which to deploy the new registry.
+            * ``new_owner``: The address of the new owner.
         """
-        pass
+        tx_hash = self.registry.functions.transferOwner(new_owner).transact()
+        return self.w3.vns.waitForTransactionReceipt(tx_hash)
 
 
-BATCH_SIZE = 100
-
-
-class SimpleRegistry(ERC1319Registry):
+class SolidityReferenceRegistry(ERCRegistry):
     """
     This class represents an instance of the `Solidity Reference Registry implementation
-    <https://github.com/ethpm/solidity-registry>`__.
+    <https://github.com/ethpm/py-ethpm/tree/master/ethpm/assets/registry>`__.
+    To use this subclass, you must manually set an instance of this class to the
+    ``registry`` attribute on ``web3.pm``.
     """
 
-    def __init__(self, address: ChecksumAddress, w3: Web3) -> None:
-        abi = get_simple_registry_manifest()["contract_types"]["PackageRegistry"][
+    def __init__(self, address: Address, w3: Web3) -> None:
+        abi = get_solidity_registry_manifest()["contract_types"]["PackageRegistry"][
             "abi"
         ]
-        self.registry = w3.eth.contract(address=address, abi=abi)
-        self.address = address
+        self.registry = w3.vns.contract(address=address, abi=abi)
+        self.address = to_checksum_address(address)
         self.w3 = w3
 
     def _release(self, package_name: str, version: str, manifest_uri: str) -> bytes:
         tx_hash = self.registry.functions.release(
             package_name, version, manifest_uri
         ).transact()
-        self.w3.eth.waitForTransactionReceipt(tx_hash)
+        self.w3.vns.waitForTransactionReceipt(tx_hash)
         return self._get_release_id(package_name, version)
 
     def _get_package_name(self, package_id: bytes) -> str:
@@ -258,40 +348,37 @@ class SimpleRegistry(ERC1319Registry):
         return package_name
 
     @to_tuple
-    def _get_all_package_ids(self) -> Iterable[bytes]:
+    def _get_all_package_ids(self) -> Iterable[Tuple[bytes]]:
         num_packages = self._num_package_ids()
-        pointer = 0
-        while pointer < num_packages:
-            new_ids, new_pointer = self.registry.functions.getAllPackageIds(
-                pointer,
-                (pointer + BATCH_SIZE)
-            ).call()
-            if not new_pointer > pointer:
-                break
-            yield from reversed(new_ids)
-            pointer = new_pointer
+        # Logic here b/c Solidity Reference Registry implementation returns ids in reverse order
+        package_ids = [
+            self.registry.functions.getAllPackageIds(index, (index + 4)).call()[0]
+            for index in range(0, num_packages, 4)
+        ]
+        for package_id in concat([x[::-1] for x in package_ids]):
+            yield package_id
 
     def _get_release_id(self, package_name: str, version: str) -> bytes:
         return self.registry.functions.getReleaseId(package_name, version).call()
 
     @to_tuple
-    def _get_all_release_ids(self, package_name: str) -> Iterable[bytes]:
+    def _get_all_release_ids(self, package_name: str) -> Iterable[Tuple[bytes]]:
         num_releases = self._num_release_ids(package_name)
-        pointer = 0
-        while pointer < num_releases:
-            new_ids, new_pointer = self.registry.functions.getAllReleaseIds(
-                package_name,
-                pointer,
-                (pointer + BATCH_SIZE)
-            ).call()
-            if not new_pointer > pointer:
-                break
-            yield from reversed(new_ids)
-            pointer = new_pointer
+        # Logic here b/c Solidity Reference Registry implementation returns ids in reverse order
+        release_ids = [
+            self.registry.functions.getAllReleaseIds(
+                package_name, index, (index + 4)
+            ).call()[0]
+            for index in range(0, num_releases, 4)
+        ]
+        for release_id in concat([x[::-1] for x in release_ids]):
+            yield release_id
 
-    def _get_release_data(self, release_id: bytes) -> ReleaseData:
-        name, version, uri = self.registry.functions.getReleaseData(release_id).call()
-        return ReleaseData(name, version, uri)
+    @to_tuple
+    def _get_release_data(self, release_id: bytes) -> Iterable[Tuple[str]]:
+        release_data = self.registry.functions.getReleaseData(release_id).call()
+        for data in release_data:
+            yield data
 
     def _generate_release_id(self, package_name: str, version: str) -> bytes:
         return self.registry.functions.generateReleaseId(package_name, version).call()
@@ -302,19 +389,12 @@ class SimpleRegistry(ERC1319Registry):
     def _num_release_ids(self, package_name: str) -> int:
         return self.registry.functions.numReleaseIds(package_name).call()
 
-    @classmethod
-    def deploy_new_instance(cls, w3: Web3) -> 'SimpleRegistry':
-        manifest = get_simple_registry_manifest()
-        registry_package = Package(manifest, w3)
-        registry_factory = registry_package.get_contract_factory(ContractName("PackageRegistry"))
-        tx_hash = registry_factory.constructor().transact()
-        tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-        return cls(tx_receipt.contractAddress, w3)
-
 
 class PM(Module):
     """
-    The PM module will work with any subclass of ``ERC1319Registry``, tailored to a particular
+    By default, the PM module uses the Vyper Reference Registry `implementation
+    <https://github.com/ethpm/py-ethpm/blob/master/ethpm/assets/vyper_registry/registry.vy>`__.
+    However, it will work with any subclass of ``ERCRegistry``, tailored to a particular
     implementation of `ERC1319  <https://github.com/ethereum/EIPs/issues/1319>`__, set as
     its ``registry`` attribute.
     """
@@ -341,66 +421,42 @@ class PM(Module):
         """
         return Package.from_uri(manifest_uri, self.web3)
 
-    def get_local_package(self, package_name: str, ethpm_dir: Path = None) -> Package:
-        """
-        Returns a `Package <https://github.com/ethpm/py-ethpm/blob/master/ethpm/package.py>`__
-        instance built with the Manifest found at the package name in your local ethpm_dir.
-
-        * Parameters:
-            * ``package_name``: Must be the name of a package installed locally.
-            * ``ethpm_dir``: Path pointing to the target ethpm directory (optional).
-        """
-        if not ethpm_dir:
-            ethpm_dir = Path.cwd() / '_ethpm_packages'
-
-        if not ethpm_dir.name == "_ethpm_packages" or not ethpm_dir.is_dir():
-            raise PMError(f"{ethpm_dir} is not a valid ethPM packages directory.")
-
-        local_packages = [pkg.name for pkg in ethpm_dir.iterdir() if pkg.is_dir()]
-        if package_name not in local_packages:
-            raise PMError(
-                f"Package: {package_name} not found in {ethpm_dir}. "
-                f"Available packages include: {local_packages}."
-            )
-
-        target_manifest = json.loads(
-            (ethpm_dir / package_name / "manifest.json").read_text()
-        )
-        return self.get_package_from_manifest(target_manifest)
-
-    def set_registry(self, address: Union[Address, ChecksumAddress, ENS]) -> None:
+    def set_registry(self, address: Address) -> None:
         """
         Sets the current registry used in ``web3.pm`` functions that read/write to an on-chain
         registry. This method accepts checksummed/canonical addresses or ENS names. Addresses
-        must point to an on-chain instance of an ERC1319 registry implementation.
+        must point to an instance of the Vyper Reference Registry implementation.
+        If you want to use a different registry implementation with ``web3.pm``, manually
+        set the ``web3.pm.registry`` attribute to any subclass of ``ERCRegistry``.
 
         To use an ENS domain as the address, make sure a valid ENS instance set as ``web3.ens``.
 
         * Parameters:
-            * ``address``: Address of on-chain Registry.
+            * ``address``: Address of on-chain Vyper Reference Registry.
         """
-        if is_canonical_address(address):
-            addr_string = to_text(address)
-            self.registry = SimpleRegistry(to_checksum_address(addr_string), self.web3)
-        elif is_checksum_address(address):
-            self.registry = SimpleRegistry(cast(ChecksumAddress, address), self.web3)
+        if is_canonical_address(address) or is_checksum_address(address):
+            canonical_address = to_canonical_address(address)
+            self.registry = VyperReferenceRegistry(canonical_address, self.web3)
         elif is_ens_name(address):
             self._validate_set_ens()
-            addr_lookup = self.web3.ens.address(str(address))
+            addr_lookup = self.web3.ens.address(address)
             if not addr_lookup:
                 raise NameNotFound(
                     "No address found after ENS lookup for name: {0}.".format(address)
                 )
-            self.registry = SimpleRegistry(addr_lookup, self.web3)
+            self.registry = VyperReferenceRegistry(
+                to_canonical_address(addr_lookup), self.web3
+            )
         else:
             raise PMError(
                 "Expected a canonical/checksummed address or ENS name for the address, "
                 "instead received {0}.".format(type(address))
             )
 
-    def deploy_and_set_registry(self) -> ChecksumAddress:
+    def deploy_and_set_registry(self) -> Address:
         """
-        Returns the address of a freshly deployed instance of `SimpleRegistry`
+        Returns the address of a freshly deployed instance of the `vyper registry
+        <https://github.com/ethpm/py-ethpm/blob/master/ethpm/assets/vyper_registry/registry.vy>`__,
         and sets the newly deployed registry as the active registry on ``web3.pm.registry``.
 
         To tie your registry to an ENS name, use web3's ENS module, ie.
@@ -409,15 +465,15 @@ class PM(Module):
 
            w3.ens.setup_address(ens_name, w3.pm.registry.address)
         """
-        self.registry = SimpleRegistry.deploy_new_instance(self.web3)
+        self.registry = VyperReferenceRegistry.deploy_new_instance(self.web3)
         return to_checksum_address(self.registry.address)
 
     def release_package(
-        self, package_name: str, version: str, manifest_uri: URI
+        self, package_name: str, version: str, manifest_uri: str
     ) -> bytes:
         """
         Returns the release id generated by releasing a package on the current registry.
-        Requires ``web3.PM`` to have a registry set. Requires ``web3.eth.defaultAccount``
+        Requires ``web3.PM`` to have a registry set. Requires ``web3.vns.defaultAccount``
         to be the registry owner.
 
         * Parameters:
@@ -432,13 +488,13 @@ class PM(Module):
         validate_raw_manifest_format(raw_manifest)
         manifest = json.loads(raw_manifest)
         validate_manifest_against_schema(manifest)
-        if package_name != manifest["package_name"]:
+        if package_name != manifest['package_name']:
             raise ManifestValidationError(
                 f"Provided package name: {package_name} does not match the package name "
                 f"found in the manifest: {manifest['package_name']}."
             )
 
-        if version != manifest["version"]:
+        if version != manifest['version']:
             raise ManifestValidationError(
                 f"Provided package version: {version} does not match the package version "
                 f"found in the manifest: {manifest['version']}."
@@ -492,10 +548,10 @@ class PM(Module):
         self._validate_set_registry()
         release_ids = self.registry._get_all_release_ids(package_name)
         for release_id in release_ids:
-            release_data = self.registry._get_release_data(release_id)
-            yield (release_data.version, release_data.manifest_uri)
+            _, version, manifest_uri = self.registry._get_release_data(release_id)
+            yield (version, manifest_uri)
 
-    def get_release_id_data(self, release_id: bytes) -> ReleaseData:
+    def get_release_id_data(self, release_id: bytes) -> Tuple[str, str, str]:
         """
         Returns ``(package_name, version, manifest_uri)`` associated with the given
         release id, *if* it is available on the current registry.
@@ -506,7 +562,7 @@ class PM(Module):
         self._validate_set_registry()
         return self.registry._get_release_data(release_id)
 
-    def get_release_data(self, package_name: str, version: str) -> ReleaseData:
+    def get_release_data(self, package_name: str, version: str) -> Tuple[str, str, str]:
         """
         Returns ``(package_name, version, manifest_uri)`` associated with the given
         package name and version, *if* they are published to the currently set registry.
@@ -533,8 +589,8 @@ class PM(Module):
         validate_package_name(package_name)
         validate_package_version(version)
         self._validate_set_registry()
-        release_data = self.get_release_data(package_name, version)
-        return self.get_package_from_uri(URI(release_data.manifest_uri))
+        _, _, release_uri = self.get_release_data(package_name, version)
+        return self.get_package_from_uri(release_uri)
 
     def _validate_set_registry(self) -> None:
         try:
@@ -546,9 +602,9 @@ class PM(Module):
                 "web3.pm.set_registry(address) or "
                 "web3.pm.deploy_and_set_registry()"
             )
-        if not isinstance(self.registry, ERC1319Registry):
+        if not isinstance(self.registry, ERCRegistry):
             raise PMError(
-                "web3.pm requires an instance of a subclass of ERC1319Registry "
+                "web3.pm requires an instance of a subclass of ERCRegistry "
                 "to be set as the web3.pm.registry attribute. Instead found: "
                 f"{type(self.registry)}."
             )
@@ -564,13 +620,23 @@ class PM(Module):
             )
 
 
-def get_simple_registry_manifest() -> Dict[str, Any]:
-    return json.loads((ASSETS_DIR / "simple-registry" / "2.0.0a1.json").read_text())
+def get_vyper_registry_manifest() -> Dict[str, Any]:
+    return json.loads((ASSETS_DIR / "vyper_registry" / "0.1.0.json").read_text())
 
 
-def validate_is_supported_manifest_uri(uri: URI) -> None:
-    if not is_supported_content_addressed_uri(uri):
+def get_solidity_registry_manifest() -> Dict[str, Any]:
+    return json.loads((ASSETS_DIR / "registry" / "1.0.0.json").read_text())
+
+
+def validate_is_supported_manifest_uri(uri):
+    if not is_ipfs_uri(uri) and not is_valid_content_addressed_github_uri(uri):
         raise ManifestValidationError(
             f"URI: {uri} is not a valid content-addressed URI. "
             "Currently only IPFS and Github content-addressed URIs are supported."
         )
+
+
+@to_tuple
+def process_vyper_args(*args: List[str]) -> Iterable[bytes]:
+    for arg in args:
+        yield to_bytes(text=arg)

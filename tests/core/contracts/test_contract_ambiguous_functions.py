@@ -1,11 +1,12 @@
 import pytest
 
-from eth_utils.toolz import (
-    compose,
-    curry,
-)
 from hexbytes import (
     HexBytes,
+)
+
+from web3._utils.toolz import (
+    compose,
+    curry,
 )
 
 AMBIGUOUS_CONTRACT_ABI = [
@@ -42,12 +43,12 @@ AMBIGUOUS_CONTRACT_ABI = [
 @pytest.fixture()
 def string_contract(web3, StringContract, address_conversion_func):
     deploy_txn = StringContract.constructor("Caqalai").transact()
-    deploy_receipt = web3.eth.waitForTransactionReceipt(deploy_txn)
+    deploy_receipt = web3.vns.waitForTransactionReceipt(deploy_txn)
     assert deploy_receipt is not None
     contract_address = address_conversion_func(deploy_receipt['contractAddress'])
     contract = StringContract(address=contract_address)
     assert contract.address == contract_address
-    assert len(web3.eth.getCode(contract.address)) > 0
+    assert len(web3.vns.getCode(contract.address)) > 0
     return contract
 
 
@@ -124,7 +125,7 @@ map_repr = compose(list, curry(map, repr))
     ),
 )
 def test_find_or_get_functions_by_type(web3, method, args, repr_func, expected):
-    contract = web3.eth.contract(abi=AMBIGUOUS_CONTRACT_ABI)
+    contract = web3.vns.contract(abi=AMBIGUOUS_CONTRACT_ABI)
     function = getattr(contract, method)(*args)
     assert repr_func(function) == expected
 
@@ -171,7 +172,7 @@ def test_find_or_get_functions_by_type(web3, method, args, repr_func, expected):
     )
 )
 def test_functions_error_messages(web3, method, args, expected_message, expected_error):
-    contract = web3.eth.contract(abi=AMBIGUOUS_CONTRACT_ABI)
+    contract = web3.vns.contract(abi=AMBIGUOUS_CONTRACT_ABI)
     with pytest.raises(expected_error, match=expected_message):
         getattr(contract, method)(*args)
 

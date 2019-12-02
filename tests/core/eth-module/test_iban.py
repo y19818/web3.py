@@ -15,7 +15,7 @@ from web3.exceptions import (
     )
 )
 def test_createIndirect(value, expected, web3):
-    actual = web3.eth.iban.createIndirect(value).toString()
+    actual = web3.vns.iban.createIndirect(value).toString()
     assert actual == expected
 
 
@@ -60,10 +60,10 @@ def test_fromAddress(value, expected, web3):
 
     if isinstance(expected, type) and issubclass(expected, Exception):
         with pytest.raises(expected):
-            web3.eth.iban.fromAddress(value).toString()
+            web3.vns.iban.fromAddress(value).toString()
         return
 
-    actual = web3.eth.iban.fromAddress(value).toString()
+    actual = web3.vns.iban.fromAddress(value).toString()
     assert actual == expected
 
 
@@ -141,10 +141,10 @@ def test_fromAddress(value, expected, web3):
     ),
 )
 def test_isValid(value, expected, web3):
-    actual = web3.eth.iban.isValid(value)
+    actual = web3.vns.iban.isValid(value)
     assert actual is expected
 
-    iban = web3.eth.iban(value)
+    iban = web3.vns.iban(value)
     assert iban.isValid() is expected
 
 
@@ -158,5 +158,5 @@ def test_isValid(value, expected, web3):
     )
 )
 def test_toAddress(value, expected, web3):
-    actual = web3.eth.iban(value).address()
+    actual = web3.vns.iban(value).address()
     assert actual == expected

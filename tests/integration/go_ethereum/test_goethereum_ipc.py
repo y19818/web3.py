@@ -9,7 +9,6 @@ from web3 import Web3
 
 from .common import (
     CommonGoEthereumShhModuleTest,
-    GoEthereumAdminModuleTest,
     GoEthereumEthModuleTest,
     GoEthereumNetModuleTest,
     GoEthereumPersonalModuleTest,
@@ -48,18 +47,12 @@ def geth_ipc_path(datadir):
 @pytest.fixture(scope="module")
 def web3(geth_process, geth_ipc_path):
     wait_for_socket(geth_ipc_path)
-    _web3 = Web3(Web3.IPCProvider(geth_ipc_path))
+    _web3 = Web3 (Web3.IPCProvider(geth_ipc_path))
     return _web3
 
 
 class TestGoEthereumTest(GoEthereumTest):
     pass
-
-
-class TestGoEthereumAdminModuleTest(GoEthereumAdminModuleTest):
-    @pytest.mark.xfail(reason="running geth with the --nodiscover flag doesn't allow peer addition")
-    def test_admin_peers(web3):
-        super().test_admin_peers(web3)
 
 
 class TestGoEthereumEthModuleTest(GoEthereumEthModuleTest):

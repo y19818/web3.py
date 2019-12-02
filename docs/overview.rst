@@ -12,7 +12,7 @@ Providers
 ---------
 
 *Providers* are how web3 connects to the blockchain.  The Web3 library comes
-with the following built-in providers that should be suitable for most normal
+with a the following built-in providers that should be suitable for most normal
 use cases.
 
 - ``web3.HTTPProvider`` for connecting to http and https based JSON-RPC servers.
@@ -48,7 +48,7 @@ local development this would be something like ``ws://127.0.0.1:8546``.
 Base API
 --------
 
-The ``Web3`` class exposes the following convenient APIs.
+The ``Web3`` class exposes the following convenience APIs.
 
 
 .. _overview_type_conversions:
@@ -288,10 +288,10 @@ Cryptographic Hashing
         >>> Web3.solidityKeccak(['uint8[]'], [[97, 98, 99]])
         HexBytes("0x233002c671295529bcc50b76a2ef2b0de2dac2d93945fca745255de1a9e4017e")
 
-        >>> Web3.solidityKeccak(['address'], ["0x49EdDD3769c0712032808D86597B84ac5c2F5614"])
+        >>> Web3.solidityKeccak(['address'], ["0x49eddd3769c0712032808d86597b84ac5c2f5614"])
         HexBytes("0x2ff37b5607484cd4eecf6d13292e22bd6e5401eaffcc07e279583bc742c68882")
 
-        >>> Web3.solidityKeccak(['address'], ["ethereumfoundation.eth"])
+        >>> Web3.solidityKeccak(['address'], ["ethereumfoundation.vns"])
         HexBytes("0x913c99ea930c78868f1535d34cd705ab85929b2eaaf70fcd09677ecd6e5d75e9")
 
 .. py:classmethod:: Web3.sha3(primitive=None, hexstr=None, text=None)
@@ -335,43 +335,11 @@ Cryptographic Hashing
         >>> Web3.soliditySha3(['uint8[]'], [[97, 98, 99]])
         HexBytes("0x233002c671295529bcc50b76a2ef2b0de2dac2d93945fca745255de1a9e4017e")
 
-        >>> Web3.soliditySha3(['address'], ["0x49EdDD3769c0712032808D86597B84ac5c2F5614"])
+        >>> Web3.soliditySha3(['address'], ["0x49eddd3769c0712032808d86597b84ac5c2f5614"])
         HexBytes("0x2ff37b5607484cd4eecf6d13292e22bd6e5401eaffcc07e279583bc742c68882")
 
-        >>> Web3.soliditySha3(['address'], ["ethereumfoundation.eth"])
+        >>> Web3.soliditySha3(['address'], ["ethereumfoundation.vns"])
         HexBytes("0x913c99ea930c78868f1535d34cd705ab85929b2eaaf70fcd09677ecd6e5d75e9")
-
-Check Encodability
-~~~~~~~~~~~~~~~~~~~~
-
-.. py:method:: w3.is_encodable(_type, value)
-
-  Returns ``True`` if a value can be encoded as the given type. Otherwise returns ``False``.
-
-   .. code-block:: python
-
-        >>> from web3.auto.gethdev import w3
-        >>> w3.is_encodable('bytes2', b'12')
-        True
-        >>> w3.is_encodable('bytes2', b'1')
-        True
-        >>> w3.is_encodable('bytes2', '0x1234')
-        True
-        >>> w3.is_encodable('bytes2', b'123')
-        False
-
-.. py:method:: w3.enable_strict_bytes_type_checking()
-
-   Enables stricter bytes type checking. For more examples see :ref:`enable-strict-byte-check`
-
-    .. doctest::
-
-        >>> from web3.auto.gethdev import w3
-        >>> w3.enable_strict_bytes_type_checking()
-        >>> w3.is_encodable('bytes2', b'12')
-        True
-        >>> w3.is_encodable('bytes2', b'1')
-        False
 
 Modules
 -------

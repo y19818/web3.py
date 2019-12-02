@@ -1,15 +1,15 @@
-from eth_utils import (
+from vns_utils import (
     to_dict,
-)
-from eth_utils.curried import (
-    apply_formatter_at_index,
-)
-from eth_utils.toolz import (
-    curry,
 )
 
 from web3._utils.abi import (
     map_abi_data,
+)
+from web3._utils.formatters import (
+    apply_formatter_at_index,
+)
+from web3._utils.toolz import (
+    curry,
 )
 
 TRANSACTION_PARAMS_ABIS = {
@@ -33,35 +33,31 @@ TRACE_PARAMS_ABIS = {
 }
 
 RPC_ABIS = {
-    # eth
-    'eth_call': TRANSACTION_PARAMS_ABIS,
-    'eth_estimateGas': TRANSACTION_PARAMS_ABIS,
-    'eth_getBalance': ['address', None],
-    'eth_getBlockByHash': ['bytes32', 'bool'],
-    'eth_getBlockTransactionCountByHash': ['bytes32'],
-    'eth_getCode': ['address', None],
-    'eth_getLogs': FILTER_PARAMS_ABIS,
-    'eth_getStorageAt': ['address', 'uint', None],
-    'eth_getProof': ['address', 'uint[]', None],
-    'eth_getTransactionByBlockHashAndIndex': ['bytes32', 'uint'],
-    'eth_getTransactionByHash': ['bytes32'],
-    'eth_getTransactionCount': ['address', None],
-    'eth_getTransactionReceipt': ['bytes32'],
-    'eth_getUncleCountByBlockHash': ['bytes32'],
-    'eth_newFilter': FILTER_PARAMS_ABIS,
-    'eth_sendRawTransaction': ['bytes'],
-    'eth_sendTransaction': TRANSACTION_PARAMS_ABIS,
-    'eth_signTransaction': TRANSACTION_PARAMS_ABIS,
-    'eth_sign': ['address', 'bytes'],
-    'eth_signTypedData': ['address', None],
-    'eth_submitHashrate': ['uint', 'bytes32'],
-    'eth_submitWork': ['bytes8', 'bytes32', 'bytes32'],
+    # vns     'vns_call': TRANSACTION_PARAMS_ABIS,
+    'vns_estimateGas': TRANSACTION_PARAMS_ABIS,
+    'vns_getBalance': ['address', None],
+    'vns_getBlockByHash': ['bytes32', 'bool'],
+    'vns_getBlockTransactionCountByHash': ['bytes32'],
+    'vns_getCode': ['address', None],
+    'vns_getLogs': FILTER_PARAMS_ABIS,
+    'vns_getStorageAt': ['address', 'uint', None],
+    'vns_getTransactionByBlockHashAndIndex': ['bytes32', 'uint'],
+    'vns_getTransactionByHash': ['bytes32'],
+    'vns_getTransactionCount': ['address', None],
+    'vns_getTransactionReceipt': ['bytes32'],
+    'vns_getUncleCountByBlockHash': ['bytes32'],
+    'vns_newFilter': FILTER_PARAMS_ABIS,
+    'vns_sendRawTransaction': ['bytes'],
+    'vns_sendTransaction': TRANSACTION_PARAMS_ABIS,
+    'vns_signTransaction': TRANSACTION_PARAMS_ABIS,
+    'vns_sign': ['address', 'bytes'],
+    'vns_submitHashrate': ['uint', 'bytes32'],
+    'vns_submitWork': ['bytes8', 'bytes32', 'bytes32'],
     # personal
     'personal_sendTransaction': TRANSACTION_PARAMS_ABIS,
     'personal_lockAccount': ['address'],
     'personal_unlockAccount': ['address', None, None],
     'personal_sign': [None, 'address', None],
-    'personal_signTypedData': [None, 'address', None],
     'trace_call': TRACE_PARAMS_ABIS,
     # parity
     'parity_listStorageKeys': ['address', None, None, None],
